@@ -1,0 +1,234 @@
+cd c:/Users/slapl/Dropbox/repos/intbasis/LIBCode/optimization
+cd c:/Users/Usuario/Dropbox/repos/intbasis/LIBCode/optimization
+
+//
+// 5 branches A
+//
+
+// Bug in the last element!! CHECK!! // We can compute the hensel blocks and compare...
+// Check the minpoly... is a4-3a+1 or a4+3a+1?
+// Merging is a little slow  -  1 vs 7
+// Deg 30
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7xy-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+size(reduce(l1[1], groebner(l2[1])));
+size(reduce(l2[1], groebner(l1[1])));
+
+// Deg 100
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7xy-4x2)*(y3+x2)*(y2-x3)+y100;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+size(reduce(l1[1], groebner(l2[1])));
+size(reduce(l2[1], groebner(l1[1])));
+
+// Maple deg 30
+restart;
+with(algcurves);
+f := expand( (y^4+3*x^3*y + x^4)*(y^7 + 6*x^4*y^3 + 2*x*y + x^7)*(y^5+7*x*y-4*x^2)*(y^3+x^2)*(y^2-x^3)+y^30);
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+// Maple deg 100
+restart;
+with(algcurves);
+f := expand( (y^4+3*x^3*y + x^4)*(y^7 + 6*x^4*y^3 + 2*x*y + x^7)*(y^5+7*x*y-4*x^2)*(y^3+x^2)*(y^2-x^3)+y^100 );
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+//
+// 5 branches B
+//
+
+// Merging is a little slow  -  2 vs 7
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y9+7xy2-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+size(reduce(l1[1], groebner(l2[1])));
+size(reduce(l2[1], groebner(l1[1])));
+
+// Maple
+restart;
+with(algcurves);
+f := expand( (y^4 + 3*x^3*y + x^4)*(y^7 + 6*x^4*y^3 + 2*x*y + x^7)*(y^9+7*x*y^2-4x^2)*(y^3+x^2)*(y^2 - x^3)+y^30 );
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+
+//
+// 6 branches A
+//
+
+
+// Merging is pretty slow - 1 vs 198
+printlevel = 10;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+ x4)*(y^7 + 2xy + x2)*(y5+7x3)*(y3+x2)*(y3-x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+size(reduce(l1[1], groebner(l2[1])));
+size(reduce(l2[1], groebner(l1[1])));
+
+
+// Maple
+restart;
+with(algcurves);
+f := expand(  (y^4 + x^4) * (y^7 + 2*x*y + x^2)*(y^5 + 7*x^3)*(y^3+x^2)*(y^3-x^2)*(y^2-x^3)+y^30 );
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+// Maple
+restart;
+with(algcurves);
+f := expand(  (y^4 + x^4) * (y^7 + 2*x*y + x^2)*(y^5 + 7*x^3)*(y^3+x^2)*(y^3-x^2)*(y^2-x^3)+y^100 );
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+
+// Merging is very slow
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7x3)*(y3-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+size(reduce(l1[1], groebner(l2[1])));
+size(reduce(l2[1], groebner(l1[1])));
+
+
+// Merging is very slow
+printlevel = 10;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+ x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7x3)*(y3-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+///////////////////////////////////
+
+
+
+// Merging is very slow
+printlevel = 10;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+ x4)*(y^7 + 2xy + x2)*(y5+7x3)*(y3+x2)*(y3-x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+
+poly f = (y4+ x4)*(y^7 + 2xy + x7)*(y2-x3)*(y3+x2)*(y3-x2)+y30;
+
+
+
+poly f = (y4+ x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7x3)*(y3-4x2)*(y3+x2)*(y2-x3)+y30;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7x3)*(y3-4x2)*(y3+x2)*(y2-x3)+y30;
+
+
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y5+y4x2+7x3)*(y5+7x3)*(y3-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+// Merging is pretty slow - 1 vs 198
+printlevel = 10;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+ x4)*(y^7 + 2xy + x2)*(y5+7x3)*(y3+x2)*(y3-x2)*(y2-x3)+y100;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"opti", timer - t;
+int t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"no opti", timer - t;
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+
+
+
+
+
+
+
+
+
+
+/////////////
+
+MAPLE
+
+
+
+
+// Maple
+with(algcurves);
+f := (y^4+3*x^3*y + x^4)*(y^7 + 6*x^4*y^3 + 2*x*y + x^7)*(y^5+7*x*y-4*x^2)*(y^3+x^2)*(y^2-x^3)+y^30;
+integral_basis(f,x,y);
+
+
+// Maple
+restart();
+with(algcurves);
+f := (y^4 + x^4)*(y^7 + 2*x*y + x^2)*(y^5+7*x^3)*(y^3+x^2)*(y^3-x^2)*(y^2-x^3)+y^100;
+st := time():
+integral_basis(f,x,y);
+time() - st;
+
+
+

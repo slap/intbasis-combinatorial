@@ -1,0 +1,228 @@
+cd c:/Users/Usuario/Dropbox/repos/intbasis/LIBCode
+
+// 2022-03-15
+
+// Check order at same class using the optimization algorithm
+
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y7 + x4) * (y7 + y6x + x4)+y30;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+
+// 2022-03-16
+
+// Compute orders at blocks
+
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) + y20;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+
+// Check in Maple
+with(algcurves);
+f := (y^5 + x^4) * (y^5 + y^4*x^3 + x^4) + y^20;
+intBasis := integral_basis(f, x, y, {x});
+
+
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) + y20;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+"Optimization 1: ", timer - t;
+t = timer;
+list l0 = integralBasis(f,2, "atOrigin", "opti0");
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l0[1]));
+reduce(l0[1], groebner(l1[1]));
+
+list l1 = integralBasis(f,2, "atOrigin", "opti0");
+
+// CHEQUEAR OPTIBEST! Tiene que devolver (9,2) en lugar de (10,1)!!
+
+// Check in Maple
+with(algcurves);
+f := (y^5 + x^4) * (y^5 + y^4*x^3 + x^4) * (y^2 - x^3) + y^20;
+intBasis := integral_basis(f, x, y, {x});
+
+
+// POLYNOMIAL NOT OVER THE GROUND FIELD!
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+"Optimization 1: ", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "opti2");
+"Optimization 2: ", timer - t;
+t = timer;
+list l0 = integralBasis(f,2, "atOrigin", "opti0");
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l0[1]));
+reduce(l0[1], groebner(l1[1]));
+
+FIXED! 25/03/2022 
+Updated in the personal repository
+
+
+
+
+// CHECK! After correcting class of expansions, order is 12 and maple gives 13
+// Correct seems to be 13, when one of the 10 conjugated classes is removed
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+list l1 = integralBasis(f,2, "atOrigin", "opti0");
+
+
+// Check correct Puiseux expansions classes
+def SSS= l[4];
+setring SSS;
+PE[2][6][2] = 1;
+setring R;
+ 
+
+
+int t = timer;
+"Optimization 1: ", timer - t;
+t = timer;
+list l0 = integralBasis(f,2, "atOrigin", "opti0");
+"Chinese remainder: ", timer - t;
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+list l = puiseux(f,-1,1);
+def S = l[4];
+setring S;
+PE;
+setring r;
+def S = l[3];
+setring S;
+PE;
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+puiseuxList(f,-1,1,2);
+
+
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+puiseux(f,x=0,y,0);
+
+
+with(algcurves);
+f := (y^5 + x^4) * (y^5 + y^4*x^3 + x^4) * (y^2 - x^3) * (y^3-x^2) + y^20;
+intBasis := integral_basis(f, x, y, {x});
+
+with(algcurves);
+f := (y^5 + x^4) * (y^5 + y^4*x^3 + x^4) * (y^2 - x^3) * (y^3-x^2) + y^20;
+puiseux(f,x=0,y,0);
+
+
+
+// POLYNOMIAL NOT OVER THE GROUND FIELD!
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) * (y4 + y3x2 + x3) + y20;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+"Optimization 1: ", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "opti2");
+"Optimization 2: ", timer - t;
+t = timer;
+list l0 = integralBasis(f,2, "atOrigin", "opti0");
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l0[1]));
+reduce(l0[1], groebner(l1[1]));
+
+# Very slow
+with(algcurves);
+f := (y^15 + y^4*x + x^4) * (y^16 + y^4*x + x^4) * (y^17 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^7 + y^6*x^4 + y^4*x^3 + x^5) * (y^9 - x^3) * (y^3-x^2) * (y^4+y^3*x^2+x^3) + y^100;
+puiseux(expand(f),x=0,y,0);
+
+# Very slow
+with(algcurves);
+f := (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4)  + y^30;
+puiseux(expand(f),x=0,y,0);
+
+# Very slow
+with(algcurves);
+f := (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4)  + y^40;
+puiseux(expand(f),x=0,y,0);
+
+
+with(algcurves);
+f := (y^15 + y^4*x + x^4) * (y^16 + y^4*x + x^4) * (y^17 + y^4*x + x^4) * (y^7 + y^4*x + x^4) * (y^6 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^7 + y^6*x^4 + y^4*x^3 + x^5) * (y^9 - x^3) * (y^3-x^2) * (y^4+y^3*x^2+x^3) + y^100;
+puiseux(expand(f),x=0,y,0);
+
+with(algcurves);
+f := (y^3 + x^2) * (y^3 + x^2) + y^7;
+puiseux(expand(f),x=0,y,0);
+
+intBasis := integral_basis(f, x, y, {x});
+
+
+with(algcurves);
+f := (y^15 + y^4*x + x^4) * (y^16 + y^4*x + x^4) * (y^17 + y^4*x + x^4) + y^100;
+puiseux(expand(f),x=0,y,0);
+
+
+
+// POLYNOMIAL NOT OVER THE GROUND FIELD!
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y5 + x4) * (y5 + y4x3 + x4) * (y2 - x3) * (y3-x2) + y20;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin", "opti1");
+"Optimization 1: ", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "opti2");
+"Optimization 2: ", timer - t;
+t = timer;
+list l0 = integralBasis(f,2, "atOrigin", "opti0");
+"Chinese remainder: ", timer - t;
+
+
+
+# Very slow
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4)  + y^40;
+puiseuxList(f,-1,1,2);
+
+
+LIB "hnoether.lib";
+ring r = 0, (x,y), ds;
+poly f = (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4) * (y^5 + y^4*x + x^4)  + y^40;
+int t = timer;
+delta(f);
+timer - t; 
+
+
+hnexpansion(f);
+
+

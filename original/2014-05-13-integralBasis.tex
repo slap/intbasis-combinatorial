@@ -1,0 +1,2907 @@
+%\usepackage[draft]{hyperref}
+%\newcommand{\PE}{{\mathcal P}(x)}
+%\newcommand{\PEP}{{\mathcal P}[x]}
+%\usepackage{epsfig}
+%\usepackage{pstricks}
+%\usepackage{pst-node}
+%\usepackage{pst-tree}
+%\usepackage{pst-grad}
+%\usepackage{pst-plot}
+%\DeclareMathOperator{\IntegralElementSimple}{IntegralElementSimple}
+%\DeclareMathOperator{\LocalIntegralBasisElement}{LocalIntegralBasisElement}
+
+\documentclass[a4paper,11pt]{amsart}%
+\usepackage{multicol}
+\usepackage[utf8x]{inputenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{synttree}
+\usepackage{amsthm}
+\usepackage{algorithm}
+\usepackage[noend]{algorithmic}
+\usepackage{todonotes}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{comment}
+\usepackage{hyperref}%
+\usepackage{enumitem}
+\setcounter{MaxMatrixCols}{30}
+%TCIDATA{OutputFilter=latex2.dll}
+%TCIDATA{Version=5.00.0.2570}
+%TCIDATA{LastRevised=Wednesday, February 26, 2014 20:49:07}
+%TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
+%TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
+\allowdisplaybreaks
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[defn]{Theorem}
+\newtheorem{proposition}[defn]{Proposition}
+\newtheorem{lemma}[defn]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}[defn]{Remark}
+\newtheorem{example}[defn]{Example}
+\newtheorem{notation}[defn]{Notation}
+\DeclareMathOperator{\LocalIntegralBasis}{LocalIntegralBasis}
+\DeclareMathOperator{\IntegralElement}{IntegralElements}
+\DeclareMathOperator{\TruncatedFactorGeneral}{TruncatedFactorGeneral}
+\DeclareMathOperator{\TruncatedFactor}{TruncatedFactor}
+\DeclareMathOperator{\Splitting}{Splitting}
+\DeclareMathOperator{\BlockSplitting}{BlockSplitting}
+\DeclareMathOperator{\SegmentSplitting}{SegmentSplitting}
+\DeclareMathOperator{\Spec}{Spec}
+\DeclareMathOperator{\Sing}{Sing}
+\DeclareMathOperator{\Ann}{Ann}
+\DeclareMathOperator{\Int}{Int}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Id}{Id}
+\DeclareMathOperator{\degree}{degree}
+\DeclareMathOperator{\rad}{rad}
+\DeclareMathOperator{\Ker}{ker}
+\DeclareMathOperator{\TQR}{Q}
+\newcommand{\singular}{{\sc Singular}}
+\newcommand{\maple}{{\sc Maple}}
+\newcommand{\cc}{{\mathbf c}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\Z}{{\mathbb Z}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\Px}{{\mathcal{P}_X}}
+\begin{document}
+\title[Integral bases via localization]{Computing integral bases via localization and Hensel Lifting}
+\author{J. Boehm, W. Decker, S. Laplagne, G. Pfister}
+
+\begin{abstract}
+We present a new algorithm for finding an integral basis (the normalization)
+of an algebraic function field of one variable in characteristic zero. 
+Our basic strategy is to reduce from global to local and, then, to 
+``very local'': Theoretically, this amounts to localization and, then, completion
+at each singularity. Practically, we work with approximations by suitably
+truncated Puiseux expansions. In contrast to van Hoeij's algorithm
+\cite{vanHoeij94}, which also relies on Puiseux expansions, we use Hensel's
+lemma as a key ingredient. This allows us to compute factors corresponding to
+groups of conjugate Puiseux expansions, without actually computing the 
+individual expansions. In this way, we make substantially less use of the Newton-Puiseux
+algorithm. In addition, our algorithm is inherently parallel. As a result, it
+outperforms in most cases any other algorithm known to us by far. Typical
+applications are the computation of adjoint ideals and, based on this, the
+computation of Riemann-Roch spaces and the parametrization of rational curves.
+
+\end{abstract}
+\maketitle
+
+
+\section{Introduction}
+
+\label{sect:intro} Let $A$ be a reduced Noetherian ring, and let $\TQR(A)$ be
+its total ring of fractions. The {\emph{normalization}} of $A$ is the integral
+closure of $A$ in $\TQR(A)$. We denote the normalization by $\overline{A}$ and
+call $A$ {\emph{normal}} if $A=\overline{A}$. Recall that if $A$ is a reduced
+affine (that is, finitely generated) algebra over a field, then $\overline{A}$
+is a finite $A$-module by Emmy Noether's finiteness theorem (see \cite{SH}).
+
+In this paper, we are interested in the case where $A$ is the coordinate ring
+of an algebraic curve defined over a field $K$ of characteristic zero. More
+precisely, let $f\in K[X,Y]$ be an irreducible polynomial
+%\todo{do we want irreducible or irreducible? See Remark 1.3 and Proposition 3.7.} 
+in two variables, let
+$C\subset\mathbb{A}^{2}(K)$ be the affine plane curve defined by $f$, and let
+\[
+A=K[C]=K[X,Y]/\langle f(X,Y)\rangle
+\]
+be the {\emph{coordinate ring}} of $C$. We write $x$ and $y$ for the residue
+classes of $X$ and $Y$ in $A$, respectively. Throughout the paper, we suppose
+that $f$ is monic in $Y$ (due to Noether normalization, this can always be
+achieved by a linear change of coordinates). Then the {\emph{function field}}
+of $C$ is of type
+\[
+K(C)=\TQR(A)=K(x,y)=K(X)[Y]/\langle f(X,Y)\rangle,
+\]
+$x$ is a separating transcendence basis of $K(C)$ over $K$, and $y$ is
+integral over $K[x]$, with integral equation $f(x,y)=0$. In particular, $A$ is
+integral over $K[x]$, which implies that $\overline{A}$ coincides with the
+integral closure $\overline{K[x]}$ of $K[x]$ in $K(C)$. We may, hence,
+represent $\overline{A}$ either by generators over $A$ or by generators over
+$K[x]$. For the latter, note that $\overline{A}=\overline{K[x]}$ is a free
+$K[x]$--module of rank
+\[
+n:=\deg_{y}(f)=[K(C):K(x)].
+\]
+Indeed, this follows by applying \cite[Theorem 3.3.4]{Stichtenoth08} to the PID 
+$$
+K[x]\subset K(x)\subset K(C) = K(x)[y].
+$$
+
+\begin{defn}
+An {\emph{integral basis}} for $\overline{A}$ over $K[x]$ is a set $b_{0}, \dots, b_{n-1}$
+of free generators for $\overline{A}$ over $K[x]$:
+\[
+\overline{A} = K[x] b_{0} \oplus\dots\oplus K[x] b_{n-1}.
+\]
+\end{defn}
+
+\begin{remark}
+\label{rem:spec-int-basis}
+There is always an integral basis of type
+$$
+1, \frac{p_1(x,y)}{d(x)}, \dots, \frac{p_{n-1}(x,y)}{d(x)},
+$$
+with $d \in K[x]$, and with polynomials $p_i\in K[x][y]$ of degree $i$ in $y$. 
+Such a basis is obtained from any 
+given set $1=c_0, \dots, c_{m-1}$ of $K[x]$-module generators for $\overline{A}$
+by unimodular row operations over the PID $K[x]$: For each $i$, write
+$c_{n-1-i}=\sum_{j=0}^{n-1}c_{ij}y^{n-1-j}$, with coefficients $c_{ij}\in K(x)$.
+Then take $d$ to be the least common denominator of the $c_{ij}$, 
+transform the matrix $(d\cdot c_{ij})$ into row echolon form 
+%(Hermite normsl form) 
+$(p_{ij})$, and set $p_{n-1-i}=\sum_{j=0}^{n-1}p_{ij}y^{n-1-j}$, 
+for each $i$.
+\end{remark}
+
+
+
+%\begin{remark}
+%\label{rem:spec-int-basis} \noindent Viewing the elements of $K(C) = K(x)[y]$ as
+% polynomials in $y$ of degree $<n$, with coefficients in $K(x)$, there 
+% is an integral basis $b_{0},\dots,b_{n-1}$ such that $\deg_{y}(b_{i})=i$
+% for all $i$. In fact, as already pointed out by van Hoeij \cite{vanHoeij94},
+% such a basis is obtained from any given set of $K[x]$-module generators for
+%$\overline{A}$ by means of elementary matrix operations over the PID $K[x]$.
+%\end{remark}
+
+
+\begin{remark}
+\label{rem:spec-int-basis-II} 
+To find an integral basis, we may use any normalization algorithm, regardless 
+of how $\overline{A}$ is represented by the algorithm. The algorithms in \cite{GLS10}, \cite{BDLPSS},
+for example, are designed to find $A$-module generators for $\overline{A}$. More precisely,  they 
+return an ideal $U\subset A$ together with an element $d\in A$ such that
+$\overline{A}=\frac{1} {d}U\subset\TQR(A)$. Here, as we will recall in Section 
+\ref{sect:Int-basis-via-norm}, any non-zero element of the Jacobian ideal $M$ of $A=K[x,y]$
+can be taken to be $d$. In particular, we can choose $d$ to be a generator of the elimination 
+ideal $M\cap K[x]$. The roots of $d$ in the  algebraic closure $\overline{K}$ of $K$
+are then precisely the $x$-coordinates of the singularities of the curve defined by $f$ in 
+$\mathbb{A}^{2}(\overline{K})$. If $u_{0}=d(x),u_{1},\dots,u_{r}$ generate the ideal $U$, 
+the $y^{i}u_{j}(x,y)/d(x)$, $0\leq i\leq n-1$, $0\leq j\leq r$, 
+generate $\overline{A}$ over $K[x]$. An integral basis is then obtained
+by operations as described in Remark \ref{rem:spec-int-basis}.
+%Turning these generators into an integral basis
+%$b_{0}=1, b_1, \dots,b_{n-1}$ as in Remark \ref{rem:spec-int-basis}, we get fractions
+%of type
+%$$
+%b_i=\frac{q_i(x,y)}{d_1^{e_{i,1}}\cdots d_s^{e_{i,r}}},
+%$$
+%where the $d_j$ are the irreducible factors of $d$ in $K[x]$, and where each 
+%$q_i(x,y)\in K(x)[y]$ is a polynomial of degree $i$ in $y$ not divisible by any of the $d_j$. 
+%Then $0\leq e_{i,j}\leq e_{i+1,j}$ for all $i,j$. Indeed, to see this, multiply $b_i$ by $y$ and 
+%express the result as a $K[x]$-linear combination of the $b_k$. Note that van Hoeij's
+%algorithm also computes an integral basis of this type (see \cite{vanHoeij94}).
+\end{remark}
+
+\begin{example}
+\label{exampleCusp} Consider the standard cusp: Let
+\[
+A=K[x,y]=K[X,Y]/\langle Y^{3}-X^{2}\rangle.
+\]
+As a module over $A$, we may represent $\overline{A}$ as
+\[
+\overline{A}=A \cdot\frac{y^{2}}{x}+A \cdot1 = \frac{1}{x}\left\langle y^{2},
+x\right\rangle _{A}%
+\]
+(see \cite[Example 2.5]{GLS10}). Considering $\overline{A}$ over $K[x]$, we
+get
+\[
+\overline{A}=K[x]\cdot\frac{y^{2}}{x}+K[x]\cdot y\cdot\frac{y^{2}}%
+{x}+K[x]\cdot y^{2}\cdot\frac{y^{2}}{x}+K[x]\cdot1+K[x]\cdot y+K[x]\cdot
+y^{2}.
+\]
+Since $y^{3}=x^{2}$ and $K[x]\cdot y^{2}\subset K[x]\cdot y^{2}/x$, we have
+\[
+\overline{A}=K[x]\cdot\frac{y^{2}}{x} \oplus K[x]\cdot1\oplus K[x]\cdot y.
+\]
+Hence, $1,y,y^{2}/x$ is an integral basis as in Remark
+\ref{rem:spec-int-basis}.
+\end{example}
+
+%\noindent
+%Since $\overline{K[x]}=\overline{A}$, o
+\todo{From here on adjust to writing the algorithm in a better way.}
+
+
+
+So integral bases can be found using any normalization algorithm. In Section
+\ref{sect:Int-basis-via-norm}, to fix some of our notation and give a first
+example, we briefly discuss the normalization algorithm of Greuel et al.
+\cite{GLS10}, which is of global nature. In Section \ref{sect:noem-via-loc},
+as a first step towards a better performance, we recall the local to global
+normalization algorithm of B\"ohm et al. \cite{BDLPSS}, which finds
+$\overline{A}$ by computing a local contribution at each prime ideal contained
+in the singular locus of $A$, and putting these together. In Section
+\ref{sect:norm-via-loc-and-compl-the-theory}, we start describing our new
+approach by showing that at least theoretically, we can go one step further.
+In fact, taking an analytic point of view, we explain how to obtain the local
+contribution at a singularity from the normalization of the completion, which
+in turn is obtained by splitting into branches, and finding the normalization
+of each branch. In Section \ref{sect:loc-contr-via-Hensel}, which is the heart
+of this paper, we show how to carry this out in practical terms, working with
+approximations by suitably truncated Puiseux series. This approach is inspired
+by van Hoeij's paper \cite{vanHoeij94}, but differs completely from van
+Hoeij's algorithm, with Hensel lifting as a crucial new ingredient. We have
+implemented our algorithms in the computer algebra system \textsc{Singular}{}.
+In Section \ref{sec timings}, we compare the different approaches, relying on
+our implementations as well as on implementations of van Hoeij's algorithm in
+\textsc{Maple} and \textsc{Magma}, and running various examples coming from
+algebraic geometry.
+
+\section{The Global Normalization Algorithm}
+
+\label{sect:Int-basis-via-norm}
+
+We first fix our notation and give some general facts on normalization. For
+this, let $A$ be any reduced Noetherian ring. We write
+\[
+\Spec(A)=\{P\subset A\mid P{\text{ prime ideal}}\}
+\]
+for the {\emph{spectrum}} of $A$. The {\emph{vanishing locus}} of an ideal $J$
+of $A$ in $\Spec(A)$ is the set $V(J)=\{P\in\Spec(A)\mid P\supset J\}$. We
+denote by
+\[
+N(A)=\{P\in\operatorname{Spec}(A)\mid A_{P}\text{ is not normal}\}
+\]
+the {\emph{non-normal locus}} of $A$, and by
+\[
+\operatorname{Sing}(A)=\{P\in\operatorname{Spec}(A)\mid A_{P}\text{ is not
+regular}\}
+\]
+the {\emph{singular locus}} of $A$. Then $N(A)\subset\Sing(A)$, with equality
+holding if $A$ is the coordinate ring of a curve (see \cite[Theorem 4.4.9]{JP}).
+
+\begin{defn}
+The \emph{conductor} of $A$ is
+\[
+\mathcal{C}_{A}=\Ann_{A}(\overline{A}/A)=\{a\in A\mid a\overline{A}\subset
+A\}.
+\]
+
+\end{defn}
+
+Note that $\mathcal{C}_{A}$ is the largest ideal of $A$ which is also an ideal
+of $\overline{A}$.
+
+To emphasize the role of the conductor, we note:
+
+\begin{lemma}
+\label{lemma:role-of-cond} Let $A$ be a reduced Noetherian ring. Then
+$N(A)\subset V(\mathcal{C}_{A})$. Furthermore, $\overline{A}$ is a finite
+$A$-module iff $\mathcal{C}_{A}$ contains a non-zerodivisor of $A$. In this
+case, $N(A)=V(\mathcal{C}_{A})$.
+\end{lemma}
+
+Note, however, that the conductor can only be computed a posteriori when
+$\overline{A}$ is already known.
+
+\begin{defn}
+\label{def:test-ideal} Let $A$ be a reduced Noetherian ring. A {\emph{test
+ideal}} for $A$ is a radical ideal $J\subset A$ such that $V(\mathcal{C}%
+_{A})\subset V(J)$. A {\emph{test pair}} for $A$ consists of a test ideal $J$
+together with a non--zerodivisor $g\in J$ of $A$.
+\end{defn}
+
+Test pairs appear in the Grauert and Remmert normality criterion which is
+fundamental to algorithmic normalization (see \cite{GR}, \cite[Prop.~3.6.5]{GP}).
+The normalization algorithm of de Jong  (see \cite{deJong98}, \cite{DGPJ}) and its 
+improvement, the algorithm of Greuel et al. \cite{GLS10}, are based on this criterion. 
+Both algorithms apply to any reduced affine algebra $A=K[X_1,\dots,X_n]/I$ over a 
+perfect field $K$. By means of primary decomposition, we can reduce to the case 
+where $A$ is equidimensional. In this case, since we assume that $K$ is perfect, the 
+Jacobian ideal\footnote{The {\emph{Jacobian ideal}} $M$ of $A=K[X_1,\dots,X_n]/I$ is generated by the 
+images of the $c\times c$ minors of the Jacobian matrix $\big(\frac{\partial f_{i}}{\partial X_{j}}\big)$, 
+where $c$ is the codimension, and $f_{1},\dots,f_{r}$ are generators 
+for $I$. By the Jacobian criterion, $V(M) = \Sing(A)$ (see 
+\cite[Theorem 16.19]{Eis}).} $M$ of A is non-zero and contained in the conductor $\mathcal{C}_{A}$, 
+so that we may choose the radical $J=\sqrt{M}$ together with any
+non--zero element $g$ of $M$ as a test pair (see \cite[Lemma 4.1]{GLS10}). The idea of
+finding $\overline{A}$ is then to successively enlarge $A$ by finite extensions $A_{i+1}\cong\Hom_{A_{i}}%
+(J_{i},J_{i})\cong\frac{1}{g}(gJ_{i}:_{A_{i}}J_{i})\subset\overline{A}%
+\subset\TQR(A)$, with $A_{0}=A$ and $J_{i}=\sqrt{JA_{i}}$, until the normality
+criterion of Grauert and Remmert  allows us stop. As already pointed out in Remark \ref{rem:spec-int-basis-II}, 
+the algorithm of Greuel et al. is designed so that it returns an ideal $U\subset A$ together 
+with an element $d\in A$ such that $\overline{A}=\frac{1} {d}U\subset\TQR(A)$.
+
+\begin{remark}
+\label{rem:choice-of denominator}
+If $M$ is non-zero and contained in $\mathcal{C}_{A}$ as above, then any non-zero element of $M$ is 
+valid as a denominator: If $0\neq c \in M$, then $c \cdot \frac{1} {d}U
+=: U'$ is an ideal of A, and $\frac{1} {d}U  = \frac{1} {c}U'$.
+%In the case where $A = K[x,y]$ is the coordinate ring of a plane curve as in the introduction, 
+%$\Sing(A)$ consists of finitely many prime ideals, which correspond 
+%to the conjugacy classes of the singular points of $C$. In particular, 
+%$M$ contains a non-zero element of $K[x]$, and we can take any such element
+%to be the denominator $d$.
+\end{remark}
+
+
+\begin{example}
+\label{example:the global algorithm} Let $A$ be the coordinate ring of the
+curve $C$ with defining polynomial $f(X,Y)=X^{5} -Y^{2}(Y-1)^{3}$. Then
+\[
+J:=\left\langle x, y\left(  y-1\right)  \right\rangle _{A}
+\]
+is the radical of the Jacobian ideal, so that we can take $(J,x)$ as a test
+pair. In its first step, the normalization algorithm yields
+\[
+A_{1}=\frac{1}{x}U_{1}=\frac{1}{x}\left\langle x,y(y-1)^{2}\right\rangle _{A}
+\text{.}%
+\]
+In the next steps, we get
+\[
+A_{2}=\frac{1}{x^{2}}U_{2}=\frac{1}{x^{2}}\left\langle x^{2}%
+,xy(y-1),y(y-1)^{2}\right\rangle _{A}%
+\]
+and%
+\[
+A_{3}=\frac{1}{x^{3}}U_{3}=\frac{1}{x^{3}}\left\langle x^{3},x^{2}%
+y(y-1),xy(y-1)^{2},y^{2}(y-1)^{2}\right\rangle _{A}\text{.}%
+\]
+In the final step, we find that $A_{3}$ is normal and, hence, equal to
+$\overline{A}$.
+\end{example}
+
+\section{Normalization of Curves via Localization}
+
+\label{sect:noem-via-loc}
+
+In this section, we discuss the local to global variant of the normalization 
+algorithm presented in \cite{BDLPSS}. Our starting point is Proposition 
+\ref{prop:local-to-global} below. In formulating the proposition,
+if $P\in\Spec(A)$ and $A\subset A^{\prime}\subset\overline{A}$ is an 
+intermediate ring, we write $A^{\prime}_P$ for the localizaton of 
+$A^{\prime}$ at $A\setminus P\subset A^{\prime}$.
+
+\begin{proposition}
+\label{prop:local-to-global} 
+Let A be a reduced Noetherian ring with a finite singular locus 
+$\Sing(A)=\{P_{1},\dots,P_{s}\}$. For $i=1,\dots,s$, let an intermediate
+ring $A\subset A^{(i)}\subset\overline{A}$ be given such that 
+$A^{(i)}_{P_i}=\overline{A _{P_i}}$. Then
+\[
+\sum_{i=1}^{s}A^{(i)}=\overline{A}.
+\]
+\end{proposition}
+
+\begin{proof}
+This is a special case of \cite[Proposition 3.2]{BDLPSS}.
+\end{proof}
+
+\begin{defn}
+We call any ring $A^{(i)}$ as in the proposition a \emph{local contribution}
+to $\overline{A}$ at $P_{i}$. If in addition $A^{(i)}_{P_j}={A _{P_j}}$
+for $j\neq i$, we speak of a \emph{minimal local contribution} to
+$\overline{A}$ at $P_{i}$.
+\end{defn}
+
+\begin{remark}
+The algorithms discussed in this paper will return minimal local
+contributions. Note that such a contribution is uniquely determined since, by
+definition, its localization at each $P\in\operatorname*{Spec}(A)$ is determined.
+\end{remark}
+
+%\begin{remark}
+%\label{alg1}
+Proposition \ref{prop:local-to-global} applies, in particular, if $A$ is the 
+coordinate ring of a curve. From now on, 
+\[
+A=K[C]=K[X,Y]/\langle f(X,Y)\rangle
+\]
+will always denote the coordinate ring of an irreducible plane curve $C$ as in 
+the introduction. Proposition \ref{prop:local-to-global}
+allows us, then,  to split the computation of $\overline{A}$
+into local tasks at the primes $P_{i}\in\Sing(A)$. One way of
+finding the local contributions to $\overline{A}$ at the $P_{i}$ is to apply the local version of the
+normalization algorithm discussed in \cite{BDLPSS}. For each $i$, the basic
+idea is to use $P_{i}$ together with a suitable element $g_{i}$ of the
+Jacobian ideal instead of a test pair as in Definition \ref{def:test-ideal}.
+
+\begin{example}
+\label{example:localContribution} Let $A$ be the coordinate ring of the curve
+$C$ with defining polynomial $f(X,Y)=X^{5} -Y^{2}(Y-1)^{3}$ from Example
+\ref{example:the global algorithm}. Note that $C$ has a double point of type
+$A_{4}$ at $(0,0)$ and a triple point of type $E_{8}$ at $(0,1)$. If we apply
+the strategy above, taking $P_{1}=\left\langle x,y\right\rangle _{A}$,
+$P_{2}=\left\langle y - 1, x\right\rangle _{A}$ and $g_{1} = g_{2} = x$, we
+get local contributions $\frac{1}{d_{i}} U_{i}$, $i =1, 2$. Exactly,
+\[%
+\begin{tabular}
+[c]{lll}%
+$d_{1}=x^{2}$ & and & $U_{1}=\left\langle x^{2}, y(y-1)^{3}\right\rangle _{A}%
+$,\\
+$d_{2}=x^{3}$ & and & $U_{2}=\left\langle x^{3}, x^{2}y^{2}\left(  y-1\right)
+, y^{2}\left(  y-1\right)  ^{2}\right\rangle _{A}$.
+\end{tabular}
+\]
+Summing up the local contributions, we get $\bar A = \frac{1}{d}U$ with
+$d=x^{3}$ and
+\[
+U=\left\langle x^{3},\text{ }y(y-1)^{3}x,\text{ }y^{2}\left(  y-1\right)
+x^{2} ,\text{ }y^{2}\left(  y-1\right)  ^{2}\right\rangle _{A}\text{.}%
+\]
+Note that $U$ coincides with the ideal $U_{3}$ computed in Example
+\ref{example:localContribution}.
+\end{example}
+
+\begin{remark}
+In Example \ref{example:localContribution}, the normalization of
+the local ring $A_{P_2}$ is $\overline{A_{P_2}}=
+\frac{1}{x^3}\langle x^3, x^2(y-1), (y-1)^2\rangle_{A_{P_2}}$. Indeed,
+since $y^2$ is a unit in $\overline{A_{P_2}}$, this follows by localizing
+$U_2$ at $P_2$. Note, however, that $(y-1)/x$ and $(y-1)^2/x^3$ 
+are not integral over $A$. Hence, $\frac{1}{x^3}\langle x^3, x^2(y-1), 
+(y-1)^2\rangle_{A}$ is not a local contribution to $A$ at $P_2$.
+%Note that a local contribution to the normalization of a ring $A$ at 
+%prime ideal $P$ is not the same as the normalization of the local 
+%ring $A_P$, since the elements of the local contribution must be 
+%integral over $A$. In Example \ref{example:localContribution}, 
+%the normalization of $A_{P_2}$ can be written as 
+%$\frac{1}{y^3}\langle y^3, y^2(x-1), (x-1)^2\rangle_{A_{P_2}}$, 
+%but $(x-1)/y$ and $(x-1)^2/y^3$ are not integral over $A$. 
+%The units in $A_P$ must be taken into account when computing local contributions.
+\end{remark}
+
+In what follows, we describe a way of finding the local contributions which is
+custom-made for the case of plane curves.
+
+\section{Normalization of Plane Curves via Localization and Completion: 
+Decomposing into Branches}
+\label{sect:norm-via-loc-and-compl-the-theory}
+
+
+
+In this section, we focus on the case where the origin is a singularity of 
+$C$, that is, we suppose that $P=\langle x,y \rangle \in \Sing(A)$. Our
+goal is to reduce the problem of finding the minimal local contribution 
+to $\overline{A}$ at $P$ to the problem of finding an integral basis at 
+each branch of the singularity. At the same 
+time, we indicate one possible approach to finding the integral bases
+at the branches. In the next section, which is the heart of this paper,
+we will carry out the details of this approach.
+
+Focusing on the singularity at the origin means to consider $f$ as
+an element of the formal power series ring $K[[X,Y]]=K[[X]][Y]$. Then $f$ is
+regular of order $n$ in $Y$. By the Weierstrass preparation theorem,
+we may write $f$ as a product $f = u \cdot \widetilde{f}$, where $u$ is a unit
+in $K[[X,Y]]$, and $\widetilde{f}$ is a Weierstrass polynomial (see, for 
+example, \cite{JP}). Decomposing $\widetilde{f}$ into its irreducible factors, we 
+obtain a factorization of type
+$$
+f = u \prod_{i=1}^{r} g_{i},
+$$
+with irreducible Weierstrass polynomials $g_i$. Then, passing from the
+local ring $A_P$ to its completion and normalizing, we get
+$$
+\overline{\widehat{A_P}} =\overline{K[[X]][Y]/\left\langle f\right\rangle} \cong
+\bigoplus_{i=1}^s \overline{K[[X]][Y]/\left\langle g_i\right\rangle}.
+$$
+We call each ring $K[[X]][Y]/\left\langle g_i\right\rangle$ a \emph{branch} of $A$
+at $P$.
+
+\begin{remark}
+Let $g\in K[[X,Y]]$ be an irreducible Weierstra\ss \ polynomial of degree $m$
+in $Y$. Write $K((x))[y]=K(x,y)=K[[X,Y]]/ \langle g \rangle$. Then the
+normalization of $K[[x]][y]$ coincides with the integral closure $\overline{K[[x]]}$ of
+$K[[x]]$ in $K((x))[y]$. Applying \cite[Theorem 3.3.4]{Stichtenoth08} to the PID 
+$$K[[x]]\subset K((x))\subset K((x))[y],$$ we see that
+$\overline{K[[x]][y]}=\overline{K[[x]]}$
+is a free $K[[x]]$-module of rank $m$. 
+\end{remark}
+
+\begin{defn}
+An \emph{integral basis} for $\overline{K[[x]][y]}$ over $K[[x]]$ is a set
+of free generators for $\overline{K[[x]][y]}$ over $K[[x]]$.
+\end{defn}
+
+\begin{lemma}
+\label{lem intbas power series}Let $g\in K[[X]][Y]$ be an irreducible
+Weierstra\ss \ polynomial of degree $m$ in $Y$. Then there exist monic
+polynomials
+$1=p_{0},p_{1},\ldots,p_{m-1}\in K[X][Y]$ in $Y$  of degree $i$ and
+$e_{i}\in\mathbb{N}$ such that $p_{0},\frac{p_{1}(x,y)}{x^{e_{1}}},\ldots
+,\frac{p_{m-1}(x,y)}{x^{e_{m-1}}}$ is an integral basis for $\overline
+{K[[X]][Y]/\left\langle g\right\rangle }$ over $K[[x]]$.
+The $e_i$ satisfy $e_1\leq \dots \leq e_{m-1}$.
+Moreover, if $q(X,Y)\in K[[X]][Y]$ is monic in $Y$ of degree $1\leq i\leq m-1$,
+and $e$ is an integer such that $\frac{q(x,y)}{x^e}$ is integral over $K[[x]]$,
+then $e\leq e_i$. In particular, the $e_i$ are uniquely determined.
+\end{lemma}
+
+\begin{proof}
+Each square matrix with entries in $K[[X]]$ of maximal rank has a uniquely
+determined upper triangular Hermite normal form $(p_{ij})$, where the diagonal elements 
+are of type $p_{ii}=x^{\nu_i}$, and where the $(p_{ij})$, $j>i$, are polynomials in $K[X]$ of degree 
+$<\nu_i$ (see \cite{Durvye84}). Hence, if we start from any integral basis for $\overline{K[[x]][y]}$ over $K[[x]]$
+and apply unimodular row operations as in Remark \ref{rem:spec-int-basis}, we get an 
+integral basis $b_0=1, b_1, \dots b_{m-1}$, where the $b_i$ are of type $\frac{p_{i}(x,y)}{x^{e_{i}}}$, 
+with polynomials $p_i$ which are monic in $y$ of degree $i$, and with integers $e_i$. 
+By induction, multiplying $b_i$ by $y$ and expressing the result 
+as a $K[[x]]$-linear combination of  the $b_k$, we see that $0\leq e_1\leq \dots \leq e_{m-1}$. 
+The last statement of the lemma follows similarly.
+\end{proof}
+
+\begin{defn}
+\label{defn integrality exponent}
+If $q(X,Y)\in K[[X]][Y]$ is monic in $Y$ of degree $1\leq i\leq m-1$,
+and $e$ is the maximal integer such that $\frac{q(x,y)}{x^e}$ is
+integral over $K[[x]]$, then we call $e$ the \emph{integrality exponent
+of $q$ with respect to $g$}, written $e(q)=e$. With notation as in the lemma, 
+for each $i$, we call $e_i$ the \emph{maximal integrality exponent with respect to $g$
+in degree $i$}. 
+\end{defn}
+
+\begin{lemma}
+\label{lemma loc int bas shape}
+Let $g\in K[[X]][Y]$ be an irreducible Weierstra\ss \ polynomial of 
+degree $m$ in $Y$. Let $p_i$ be polynomials which are monic in
+$Y$ of degree $i$ and such that $e(p_i)$ is the maximal integrality 
+exponent with respect to $g$ in degree $i$. Then $p_{0}=1,\frac{p_{1}}{X^{e_{1}}},\ldots
+,\frac{p_{m-1}}{X^{e_{m-1}}}$ is an integral basis for $\overline
+{K[[X]][Y]/\left\langle g\right\rangle }$ over $K[[x]]$.
+\end{lemma}
+
+\begin{proof}
+$A' = \langle 1, \frac{p_1}{x^e(p_1)}, \ldots, \frac{p_{n-1}}{x^{e(p_{n-1}}}\rangle$
+
+$A'_j= \langle 1, \ldots, \frac{p_j}{x^{e(p)}},\rangle$
+
+Induction: $q\in K[[x]][y]\ ,\ \deg_y q=j ,\ \frac{q}{x^e}\in\overline{A} \Rightarrow\frac{q}{x^e}\in A'_j$. Let $q=x^e\cdot \widetilde{q}, x\nmid\widetilde{q}\Rightarrow \exists\ u$ unit in $K[[x,y]] \widetilde{q}=u\cdot \overline{q}$, $\overline{q}$ Weierstra{\ss} poly in $y$ of degree $\leq j$.
+
+$\frac{x^e\overline{q}u}{x^e}\in\overline{A}\Rightarrow \frac{\overline{q}}{x^{e-c}}\in\overline{A}$. If $e-c\leq 0$ there is nothing to prove. We may assume $c=0$. If $\deg y\overline{q}<j\Rightarrow \frac{\overline{q}}{x^e}\in A'_k$ (induction). If $\deg y\overline{q}=j$ then $u\in K$ and we may assume that $q$ is monic. This implies $e\leq e(p_j)$. We obtain $\frac{q}{x^e}=\frac{x^{e(p_j)-e}q}{x^{e(p_j)}}= x^{e(p_j)-e}\cdot \frac{p_j}{x^{e(p_j)}}+\frac{r}{x^{e(p_j)}}\ ,\ \deg_y r<j$.
+
+We obtain the claim using induction. It remains to prove $\frac{\overline{q}}{x^e}\in A'_k\Rightarrow \frac{u\overline{q}}{x^e}\in A'_j $. 
+
+We know $\deg_y u=j-k$. This implies $u\in A'_{j-k}$. But $\frac{\overline{q}}{x^e}\in k\Rightarrow y^i\frac{\overline{q}}{x^e}\in A'_{k+i}$ for $i\leq j-k$. This implies $\frac{u\overline{q}}{x^e}\in A'_j$.
+
+\end{proof}
+
+\begin{lemma}
+\label{lem split}Let $f\in K[X,Y]$ be a Weierstra\ss \ polynomial in
+$K[[X]][Y]$ with respect to $Y$ and
+\[
+f=f_{1}\cdot\ldots\cdot f_{s}%
+\]
+be the decomposition into irreducible polynomials, and let $h_{i}=\frac
+{f}{f_{i}}$. By the Euclidean algorithm in $Q(K[[X]])[Y]$ for the coprime
+$f_{i}$ and $h_{i}$, there are $a_{i},b_{i}\in K[[X]][Y]$, $c\in\mathbb{N}$
+with%
+\[
+a_{i}f_{i}+b_{i}h_{i}=X^{c}\text{.}%
+\]
+The normalization splits as%
+\[
+\overline{K[[X]][Y]/\left\langle f\right\rangle }=\overline
+{K[[X]][Y]/\left\langle f_{i}\right\rangle }\oplus\overline
+{K[[X]][Y]/\left\langle h_{i}\right\rangle }%
+\]
+and the splitting is given by%
+\[
+(a\operatorname{mod}f_{i},b\operatorname{mod}h_{i})\mapsto\frac{b_{i}%
+h_{i}a+a_{i}f_{i}b}{X^{c}}\text{.}%
+\]
+
+\end{lemma}
+
+\begin{proof}
+Follows by the Chinese remainder theorem.
+\end{proof}
+
+\begin{lemma}
+\label{lem complete split}With the notation as in Lemma \ref{lem split}, let
+\[
+p_{0}^{(i)},\frac{p_{1}^{(i)}}{X^{e_{1}^{(i)}}},\ldots,\frac{p_{d_{i}-1}%
+^{(i)}}{X^{e_{d_{i}-1}^{(i)}}}%
+\]
+be the integral basis obtained from Lemma \ref{lem intbas power series} for
+$\overline{K[[X]][Y]/\left\langle f_{i}\right\rangle }$ and define the
+$K[[X]]$-modules%
+\[
+B^{(i)}=\left\langle 1,y,\dots, y^{d_i}, \frac{b_{i}h_{i}}{X^{c}},\frac{b_{i}h_{i}p_{1}^{(i)}%
+}{X^{c+e_{1}^{(i)}}},\ldots,\frac{b_{i}h_{i}p_{d_{i}-1}^{(i)}}{X^{c+e_{d_{i}%
+-1}^{(i)}}}\right\rangle \text{.}%
+\]
+Then the normalization is
+\[
+\overline{K[[X]][Y]/\left\langle f\right\rangle }=\sum_{i=1}^{s}%
+B^{(i)}\text{.}%
+\]
+
+\end{lemma}
+
+\begin{proof}
+Follows from Lemma \ref{lem split}.
+\end{proof}
+
+\begin{proposition}
+\label{prop semilocal}With the notation as in Lemma \ref{lem complete split},
+let $\tilde{b}_{i},\tilde{h}_{i}\in K[x,y]$with%
+\[
+\tilde{b}_{i}\tilde{h}_{i}\equiv b_{i}h_{i}\operatorname{mod}X^{c+e_{d_{i}%
+}^{(i)}-1}%
+\]
+define the $K[x]_{\left\langle x\right\rangle }$-modules%
+\[
+A^{(i)}=\left\langle 1,y,\dots, y^{d_i},\frac{\tilde{b}_{i}\tilde{h}_{i}}{X^{c}},\frac{\tilde
+{b}_{i}\tilde{h}_{i}p_{1}^{(i)}}{X^{c+e_{1}^{(i)}}},\ldots,\frac{\tilde{b}%
+_{i}\tilde{h}_{i}p_{d_{i}-1}^{(i)}}{X^{c+e_{d_{i}-1}^{(i)}}}\right\rangle
+\text{.}%
+\]
+Then%
+\[
+\widehat{A^{(i)}}=B^{(i)}%
+\]
+and%
+\[
+\overline{K[X,Y]_{\left\langle X,Y\right\rangle }/\left\langle f\right\rangle
+}=\sum_{i=1}^{s}A^{(i)}\text{.}%
+\]
+
+\end{proposition}
+
+\begin{proof}
+Follows from Lemma \ref{lem complete split} by faithfully flatness and since
+$\widehat{\overline{R}}=\overline{\widehat{R}}$ for any excellent ring $R$.
+\end{proof}
+
+To compute a local contribution to the normalization at $\langle x, y\rangle$, we have to take into account the unit in the factorization of $f$.
+
+\begin{proposition}
+\label{prop local contribution} Let $f = u \prod_{i=1}^r f_i$ as at the beginning of this section, with $u \in K[X, Y]$ a unit in $K[[X, Y]]$ of degree $d$ in $Y$  and $f_i$, $1 \le i \le r$, irreducible Weierstrass polynomials
+
+With the notation as in Proposition \ref{prop semilocal},
+define the $K[x]_{\left\langle x\right\rangle }$-modules%
+\[
+\tilde A^{(i)}=\left\langle 1,y,\dots, y^{d_i+d-1},\frac{u\tilde{b}_{i}\tilde{h}_{i}}{X^{c}},\frac{u\tilde
+{b}_{i}\tilde{h}_{i}p_{1}^{(i)}}{X^{c+e_{1}^{(i)}}},\ldots,\frac{u\tilde{b}%
+_{i}\tilde{h}_{i}p_{d_{i}-1}^{(i)}}{X^{c+e_{d_{i}-1}^{(i)}}}\right\rangle
+\text{.}%
+\]
+Then $\sum_{i=1}^{s}\tilde A^{(i)}$ is a minimal local contribution to the normalization at the origin.
+\end{proposition}
+
+In Section \ref{sect:loc-contr-via-Hensel}, we will design algorithms to
+compute rings $A^{(i)}$ with the properties specified in Proposition
+\ref{prop semilocal}. \todo{In particular, such rings exist.}
+
+\begin{example}
+\label{exampleTwoBranches} Let
+\[
+A = K[X,Y]/\left\langle (Y^3+X^8)(Y^6 + Y^3X^7 - 2Y^3X^4 + X^8) + X^{20}\right\rangle
+=K[x,y]\text{.}%
+\]
+In $K[[X]][Y]$, the polynomial $f =  (Y^3+X^8)(Y^6 + Y^3X^7 - 2Y^3X^4 + X^8) + X^{20}$
+decomposes into two irreducible factors. Hence, $A$ has a singularity at the
+origin with two branches.
+
+With the computational means presented in Section
+\ref{sect:loc-contr-via-Hensel}, we compute the integral bases of the rings $A^{(1)}$ and $A^{(2)}$ as
+in Proposition \ref{prop local contribution}:
+\[
+A^{(1)}=\left\langle 1, y, y^2, y^3, y^4, y^5, 
+\frac{h_1}{x^8}, \frac{h_1 y}{x^{10}}, \frac{h_1 y^2}{x^{13}} \right\rangle,
+\]
+where $h_1 = (y^6+y^3x^7-2y^3x^4+x^8)$ and 
+\[
+A^{(2)}=\left\langle 1, y, y^2, \frac{h_2}{x^4}, \frac{h_2 y}{x^5}, \frac{h_2 y^2}{x^6}, 
+\frac{h_2 h_3}{x^9}, \frac{h_2 h_3 y}{x^{10}}, \frac{h_2 h_3 y^2}{x^{12}}\right\rangle,
+\]
+where $h_2 = (y^3 + x^8)$ and $h_3 = (y^3-x^4)$
+
+Combining the results, we get $\overline {A}=A^{(1)}+A^{(2)}$.  
+\end{example}
+
+We finish the section with an example including expansions that do not vanish at the origin.
+
+\begin{example}
+\label{exampleTwoBranchesB} Let
+\[
+ A = K[X,Y]/\left\langle (Y^{3}-X^{7})(Y^{2}-X^{3})+Y^{6}\right\rangle
+ =K[x,y]\text{.}%
+ \]
+In $K[[X]][Y]$, the polynomial $f = (Y^{3}-X)(Y^{2}+X^{3}) + Y^{7}$
+can be factorized as $f = u f_1 f_2$ with 
+$u = Y^2 + (-X) Y + 1 + \dots$, $f_1 = Y^3 + X Y^2 -X + \dots$ and $f_2 = Y^2 + X^3 + \dots$ where the dots represent in all cases terms with degree greater than $1$ in $X$.
+
+The rings $K[[X]][Y] / \langle f_i \rangle$, $i = 1, 2$, have integral bases $\{1, \frac{y}{x}, \frac{y^2}{x}\}$ and $\{1, \frac{y}{x}\}$. Adding the factors as in Proposition \ref{prop local contribution}, we get 
+\[
+A^{(1)} = \left\langle 1, y, y^2, uy, u f_2, \frac{u f_2 y}{x}, \frac{u f_2 y^2}{x} \right\rangle 
+\]
+and 
+\[
+A^{(2)} = \left\langle 1, y, y^2, uy, u y^2, \frac{u f_1}{x}, \frac{u f_1 y}{x^2} \right\rangle.
+\]
+\end{example}
+
+
+% With the computational means presented in Section
+% \ref{sect:loc-contr-via-Hensel}, we compute rings $A^{(1)}$ and $A^{(2)}$ as
+% in Proposition \ref{prop semilocal}:\todo{adjust}
+% \[
+% A^{(1)}=\frac{\left\langle x^{7},x^{6}y,x^{4}h_{1},x^{2}h_{1}y,h_{1}%
+% y^{2}\right\rangle }{x^{7}},
+% \]
+% where $h_{1}=y^{2}+x^{3}y+2x^{6}y-x^{3}-x^{6}$, and
+% \[
+% A^{(2)}=\frac{\left\langle x^{6},x^{5}y,x^{3}y^{2},x^{3}h_{2},h_{2}%
+% y\right\rangle }{x^{6}},
+% \]
+% where $h_{2}=y^{3}$ (note that he polynomials $h_{i}$ are truncations of the
+% elements $F_{i}$ specified in Proposition \ref{prop semilocal}).\todo{adjust}
+% \todo{what do we wish to express
+% with the sentence in brackets?} Combining the results, we get $\overline
+% {A}=A^{(1)}+A^{(2)}$. \todo{Better: Note that in this example, $A^{(2)}$
+% is contained in $A^{(1)}$. Hence, $\overline{A} = A^{(1)}+A^{(2)}=A^{(1)}$. Then we have to get a different example.
+% See Remark 4.21 for more on this phenomenon.}
+% \end{example}
+
+\section{Normalization of Plane Curves via Localization and Completion: 
+Handling the Branches Using Puiseux Expansions 
+and Hensel's Lemma}
+
+\label{sect:loc-contr-via-Hensel}
+
+
+Let $A$ be the ring 
+\[
+A=K[x,y]=K[X,Y]/\langle f(X,Y)\rangle
+\]
+as before. For such a ring, in this section we
+show how to compute a local contribution to $\overline{A}$ at each prime ideal
+$P\in\Sing(A)$ via Puiseux expansions and Hensel's lemma.
+Once the local contribution at each component of the singular locus is
+obtained, the global integral basis is computed applying Proposition
+\ref{prop local contribution}.
+
+
+We start with a sketch of the algorithm.
+
+\begin{enumerate}
+\item \textbf{Translation of the singularity to the origin.} If the prime
+component corresponds to a singular point, apply a translation to the
+variables so that the singularity is moved to the origin. If the prime
+component corresponds to a groups of conjugated singular points, apply first a
+linear transformation so that no point has the same $X$-coordiante and then
+apply a translation so that one of the singularity is moved to the origin (an
+algebraic field extension is needed in this case).
+\end{enumerate}
+
+For the singularity at the origin,
+
+\begin{enumerate}[resume]
+\item Determine the maximum integrality exponent $e = e_{n-1}$. (See Defintion \ref{defn integrality exponent}.)
+
+\item \textbf{Factorization by Hensel Lemma.} Applying Hensel Lemma, compute
+the factorization $f = h \prod_{i=1}^{r} f_{i}$ as in Section \ref{sect:norm-via-loc-and-compl-the-theory}, developing the factors $h$ and $f_{i}$, $1 \le i \le s$
+up to degree $e$ in $X$.
+
+\item \textbf{Local contribution of each factor.} For each $1 \le i \le r$,
+compute the local contribution $A^{(i)}$ from Proposition \ref{prop local contribution}
+as follows
+
+\begin{enumerate}
+\item For each $j = 0, \dots, s-1$, $s = \deg(f_{i})$, compute a polynomial
+$p_{j}$ of degree $j$ in $Y$ with maximal valuation $d_j = v_{f_{i}}(p_{j})$ among
+all the polynomials of the same degree.
+
+\item Develop the product $F_{i} = \prod_{j \ne i} f_{j}$  up to degree $e$ in $X$.
+
+\item The local contribution $A^{(i)}$ to the integral basis of the
+singularity at the origin is
+\[
+\left\{  1, y, y^{2}, \dots, y^{\deg{h} + \deg{F_{i}} -1}, h F_{i}, h F_{i}
+\frac{p_{1}}{x^{d_{1}}}, \dots, h F_{i} \frac{p_{s-1}}{x^{d_{s-1}}}\right\}
+.
+\]
+
+\end{enumerate}
+
+\item Apply the inverse translation to the elements of the local contribution
+to restore the singularity to the original position.
+
+\item If the component corresponds to a groups of singularities, modify the
+numerators and denominators of the local contribution to obtain the local
+contribution of the component over the original field.
+\end{enumerate}
+
+In the following subsections we explain these steps in more detail.
+
+\subsection{Basic Remarks on Puiseux Series}
+
+\label{sect:basic-Puiseux}
+
+We fix our notation and recall a few results in the context of Puiseux series.
+
+\subsubsection*{Puiseux Series}
+
+Let $K\subset L$ be a field extension, with $L$ algebraically closed. Write
+$L[[X]]$ for the ring of formal power series in $X$ over $L$ and $L((X)) =
+{\text{Q}}(L[[X]])$ for the field of formal Laurent series. The \textit{{field
+of Puiseux series}} over $L$ is the field
+\[
+L\{\{X\}\}=\bigcup_{m=1}^{\infty}L((X^{1/m})).
+\]
+This field arises naturally in the context of Emmy Noether's finiteness
+theorem. In fact, $L\{\{X\}\}$ is the algebraic closure of $L((X))$, and the
+integral closure of $L[[X]]$ in $L((X^{1/m}))$ is $L[[X^{1/m}]]$ (see
+\cite[Corollary 13.15]{Eis}).
+
+We have a canonical {\emph{valuation map}}
+\[
+v:L\{\{X\}\}\setminus\{0\}\rightarrow{\mathbb{Q}},\;\gamma\mapsto v(\gamma),
+\]
+where $v(\gamma)$ is the smallest exponent appearing in a term of $\gamma$. By
+convention, $v(0)=\infty$. The corresponding \emph{valuation ring}
+$L\{\{X\}\}_{v\geq0}$ consists of all Puiseux series with non--negative
+exponents only. Henceforth it will be denoted by ${\mathcal{P}_{X}}$.
+
+If $p\in L\{\{X\}\}[Y]$ is any polynomial in $Y$ with coefficients in
+$L\{\{X\}\}$, the {\emph{valuation}} of $p$ at $\gamma\in L\{\{X\}\}$ is
+defined to be $v_{\gamma}(p):=v(p(\gamma))$.
+
+\subsubsection*{Conjugate Puiseux Series}
+
+Two Puiseux series in $L\{\{X\}\}$ are called \emph{conjugate} if they are
+conjugate as field elements over $K((X))$.
+
+\subsubsection*{Rational Part}
+
+Let $\gamma= a_{1}X^{t_{1}}+a_{2}X^{t_{2}}+\dots+a_{k}X^{t_{k}}+
+a_{k+1}X^{t_{k+1}}+ \dots\in{\mathcal{P}_{X}}$, with $0 \le t_{1}<t_{2}<
+\dots$. Let $k \geq0$ be such that $a_{i} X^{t_{i}}\in K[X]$ for $1 \leq i
+\leq k$ and $a_{k+1} X^{t_{k+1}} \not \in K[X]$. Then we call $a_{1}X^{t_{1}%
+}+\dots+a_{k}X^{t_{k}}$ the \emph{rational part} of $\gamma$, and
+$a_{k+1}X^{t_{k+1}}$ its \emph{first non--rational term}.
+
+\subsubsection*{Characteristic Exponents}
+
+For $\gamma\in\mathcal{P}_{X}$, let $m\in{\mathbb{N}}$ be minimal with
+$\gamma\in L[[X^{1/m}]]$, and write $\gamma=\sum_{i \geq0}b_{i}X^{i/m}$, with
+coefficients $b_{i}\in L$. If $m=1$, there are no characteristic exponents. If
+$m\geq2$, the {\emph{characteristic exponents}} of $\gamma$ are defined
+inductively by
+\begin{align*}
+e_{1}  &  :=\min\{i \mid b_{i}\neq0\text{ and }m\nmid i\},\\
+e_{\nu}  &  :=\min\{i \mid b_{i}\neq0\text{, }\gcd(e_{1},\dots,e_{\nu-1})\nmid
+i\}\text{ for }\nu>1\text{.}%
+\end{align*}
+Then $e_{1} < e_{2} < \dots$; in fact, there are only finitely $e_{\nu}$, and
+these are coprime.
+
+\begin{example}
+If $\gamma=2X^{1/2}+X^{3/4}+6X^{5/4}-5X^{17/8}$, the common denominator is
+$m=8$. Writing $\gamma=2X^{4/8}+X^{6/8}+6X^{10/8}-5X^{17/8}$, we see that the
+characteristic exponents are $e_{1}=4$, $e_{2}=6$, and $e_{3}=17$.
+\end{example}
+
+\subsubsection*{Puiseux Expansions}
+
+Since $L\{\{X\}\}$ is algebraically closed, the polynomial $f\in
+K[X,Y]=K[X][Y]$ has $n=\deg_{Y}(f)$ roots $\gamma_{1},\dots,\gamma_{n}$ in
+$L\{\{X\}\}$. These roots are called the \emph{Puiseux expansions} of $f$ (at
+$X=0$). Since $f$ is supposed to be monic in $Y$, we have a factorization of
+type
+\[
+f=(Y-\gamma_{1})\cdots(Y-\gamma_{n})\in L\{\{X\}\}[Y].
+\]
+In particular, each $\gamma_{i}$ is integral over $L[[X]]$ and, thus,
+contained in some $L[[X^{1/m}]] \subset{\mathcal{P}_{X}}$. That is, the terms
+of $\gamma_{i}$ have non--negative exponents only.
+
+\subsubsection*{Regularity Index and Singular Part}
+
+\noindent If $\gamma= a_{1}X^{t_{1}}+a_{2}X^{t_{2}}+\dots$ is a Puiseux
+expansion of $f$, with $0 \le t_{1}<t_{2}<\dots$ and no $a_{i}$ zero, we
+define the \emph{regularity index} of $\gamma$ to be the least exponent
+$t_{k}$ such that no other Puiseux expansion of $f$ has the same initial part
+$a_{1}X^{t_{1}}+\dots+a_{k}X^{t_{k}}$. This initial part is, then, called the
+\emph{singular part} of $\gamma$.
+%\todo{What precisely do we want? up to $k$ or up to $k-1$?}
+
+
+\subsubsection*{The Newton-Puiseux Algorithm}
+
+The Puiseux expansions of $f$ can be computed recursively up to any given
+order using the Newton-Puiseux algorithm. Essentially, to get a solution
+$a_{1}X^{t_{1}}+a_{2}X^{t_{2}}+\dots$ of $f(X, \gamma(X))=0$, with
+$t_{1}<t_{2}<\dots$, the algorithm proceeds as follows: Starting from $f^{(0)}
+= f$ and $K^{(0)} = K((X))$, we commence the $i$th step of the algorithm by
+looking at a polynomial $f^{(i-1)}\in K^{(i-1)} [Y]$. We then choose one face
+$\Delta$ of the Newton polygon of $f^{(i-1)}$ such that all the other points
+of the polygon lie on or above the line containing the face. Let
+$f^{(i-1)}_{\Delta}$ be the sum of terms of $f^{(i-1)}$ involving the
+monomials of $f^{(i-1)}$ on $\Delta$. That is, if $-\frac{w_{1}}{w_{2}}$ is
+the slope of $\Delta$, then $f^{(i-1)}_{\Delta}$ is the sum of terms of
+$f^{(i-1)}$ of lowest $(1,\frac{w_{2}}{w_{1}})$--weighted degree. We write
+$d_{i}$ for this degree. Choose an irreducible factor of $f^{(i-1)}_{\Delta}$
+over $K^{(i-1)}$ and a root $q_{i}$ of that factor. Note that $q_{i}$ is of
+type $q_{i}=c_{i}X^{\frac{w_{2}}{w_{1}}}$, where $c_{i}$ is a root of the
+polynomial $f^{(i-1)}_{\Delta}(1,Y)$. Now, let $K^{(i)} = K^{(i-1)}(q_{i})$
+and set $f^{(i)} = \frac{1}{X^{d_{i}}}p^{(i-1)}(X, q_{i}\cdot(1+Y))$. Then the
+$i$th term of the expansion to be constructed is $a_{i}X^{t_{i}} = q_{1}\cdots
+q_{i}$.  It is clear from this construction that
+different conjugacy classes of expansions arise from different choices for the
+faces and irreducible factors of $f^{(i-1)}_{\Delta}$ over $K^{(i-1)}$, respectively.
+
+\begin{example}
+\label{examplePuiseux} The eight Puiseux expansions of the polynomial
+\begin{align*}
+f  &  =Y^{8}+(-4X^{3}+4X^{5})Y^{7}+(4X^{3}-4X^{5}-10X^{6})Y^{6}+(4X^{5}%
+-6X^{6})Y^{5}\\
+&  +(6X^{6}-8X^{8})Y^{4}+(8X^{8}-4X^{9})Y^{3}+(4X^{9}+4X^{10})Y^{2}%
++4X^{11}Y+X^{12}\\
+&  \in{\mathbb{Q}}[X,Y]
+\end{align*}
+are conjugate over ${\mathbb{Q}}((X))$; their singular parts are of type
+\[
+q_{1}+q_{1}q_{2}+q_{1}q_{2}q_{3},
+\]
+where the $q_{i}$ satisfy
+\[%
+\begin{tabular}
+[c]{ccccc}%
+$q_{1}^{2}+X^{3}=0$, &  & $q_{2}^{2}+\frac{1}{2X}q_{1}=0$, &  & \text{and }
+$q_{3}^{2}+\frac{1}{16X}q_{1}=0$.
+\end{tabular}
+\
+\]
+To see this, note that the Newton polygon of $f^{\left(  0\right)  }=f$ has
+only one face $\Delta_{0}$, leading to $f_{\Delta_{0}}^{\left(  0\right)
+}=\left(  X^{3}+Y^{2}\right)  ^{4}$ and the extension%
+\[
+K_{0}=\mathbb{Q}((X))\subset K_{1}=K_{0}[iX^{\frac{3}{2}}].
+\]
+In the next step, $f^{\left(  1\right)  }$ has only one face $\Delta_{1}$,
+yielding
+\[
+f_{\Delta_{1}}^{\left(  1\right)  }=4\left(  2Y^{2}+\frac{q_{1}}{X}\right)
+^{2}%
+\]
+and%
+\[
+K_{1}\subset K_{2}=K_{0}[iX^{\frac{3}{2}},(1-i)X^{\frac{1}{4}}].
+\]
+Finally, also $f^{\left(  2\right)  }$ has only one face $\Delta_{2}$, which
+corresponds to
+\[
+f_{\Delta_{2}}^{\left(  2\right)  }=-2\cdot\left(  8Y^{2}-\frac{q_{1}}%
+{X}\right)
+\]
+and the extension%
+\[
+K_{2}\subset K_{3}=K_{0}[iX^{\frac{3}{2}},(1-i)X^{\frac{1}{4}},(1+i)X^{\frac
+{1}{4}}]=K_{0}[i,X^{\frac{1}{4}}].
+\]
+
+\end{example}
+
+\subsubsection*{Puiseux Blocks}
+
+To simplify the presentation of our algorithms, we introduce some special
+terminology. We partition the set of all Puiseux expansions of $f$ into
+\emph{Puiseux blocks}. A Puiseux block represented by an expansion $\gamma$
+with $\gamma\left(  0\right)  =0$ is obtained by collecting all expansions
+whose rational part agrees with that of $\gamma$ and whose first non--rational
+term is conjugate to that of $\gamma$ over $K((X))$. \todo{that is?} A \emph{Puiseux segment}
+is defined as the union of all blocks having the same initial exponent. That
+is, we have one Puiseux segment for each face of the Newton polygon of $f$. In
+addition, all Puiseux expansions $\gamma$ of $f$ with $\gamma\left(  0\right)
+\not =0$ are grouped together to a single Puiseux block of an extra Puiseux
+segment. In this way, the Puiseux expansions of $f$ are divided into Puiseux
+segments, each segment consists of Puiseux blocks, and each block is the union
+of classes of conjugate expansions.
+
+\begin{example}
+\label{examplePuiseux2} Suppose that the Puiseux expansions of a polynomial
+$f$ are \begin{multicols}{2}
+\noindent
+\begin{align*}
+\gamma_1 &= 1 + X^2 + \dots, \\
+\gamma_2 &= -1 + 3X + \dots, \\
+\gamma_3 &= a_1 X^{3/2} + 2X^2 + \dots, \\
+\gamma_4 &= a_2 X^{3/2} + 2X^2 + \dots, \\
+\gamma_5 &= X + 3 X^2 + \dots, \\
+\gamma_6 &= X + b_1 X^{5/2} + X^3 + \dots, \\
+\gamma_7 &= X + b_2 X^{5/2} + X^3 + \dots, \\
+\gamma_8 &= X + b_1 X^{5/2} + X^{4} + \dots, \\
+\gamma_9 &= X + b_2 X^{5/2} + X^{4} + \dots,
+\end{align*}
+\end{multicols}
+\noindent where $\{\gamma_{3}, \gamma_{4}\}$, $\{\gamma_{6}, \gamma_{7}\}$ and
+$\{\gamma_{8}, \gamma_{9}\}$ are pairs of conjugate Puiseux series. Then
+$\{\gamma_{1}, \gamma_{2}\}$ is the segment of expansions $\gamma$ with
+$\gamma\left(  0\right)  \not =0$. Another segment is $\{\gamma_{3},
+\gamma_{4}\}$ (which consists of one block containing a single class of
+conjugate expansions). All the other expansions form a single segment,
+consisting of the blocks $\{\gamma_{5}\}$ and $\{\gamma_{6}, \gamma_{7},
+\gamma_{8}, \gamma_{9}\}$. The last block contains two classes of conjugate
+expansions, namely $\{\gamma_{6}, \gamma_{7}\}$ and $\{\gamma_{8}, \gamma
+_{9}\}$.
+\end{example}
+
+\subsubsection*{Maximal Integrality Exponents}
+
+\label{sect:max-expo} 
+
+Let $\varGamma = \{\gamma_{1},\dots,\gamma_{n}\}$ be the set of Puiseux
+expansions of $f$ at $x = 0$, and let $p\in{\mathcal{P}_{X}}[Y]$. The
+{\emph{valuation}} of $p$ at $f$ is defined to be $v_{f}(p)=\min_{1 \leq i
+\leq n} v_{\gamma_{i}}(p)$. Note that if $p$ is monic of degree $d$, where
+$1\leq d \leq n-1$, and
+\[
+p=(Y-\eta_{1}(X))\cdots(Y-\eta_{d}(X))\mbox{, } \text{ with all }\eta_{i}
+\in{\mathcal{P}_{X}},
+\]
+is the factorization of $p$ in ${\mathcal{P}_{X}}[Y]$, then 
+\[
+v_{f}(p)=\min_{1 \leq i \leq n}\sum_{j=1}^{d}v(\gamma_{i}-\eta_{j})\text{.}%
+\]
+
+\begin{lemma}
+\label{lemma:intA} With notation as above, fix an integer $d$ with $1\leq d
+\leq n-1$. If $\mathcal{A}\subset\{1,\dots,n\}$ is a subset of cardinality
+$d$, set
+\[
+\Int({\mathcal{A}})=\min_{i\not \in \mathcal{A}}\left(  \sum_{j\in\mathcal{A}%
+}v(\gamma_{i}-\gamma_{j})\right)  .
+\]
+Choose a subset $\widetilde{\mathcal{A}}\subset\{1,\dots,n\}$ of cardinality $d$ such
+that $\Int({\widetilde{\mathcal{A}}})$ is maximal among all $\Int({\mathcal{A}})$ 
+as above, and set $\widetilde{p}=\prod_{j\in\widetilde{\mathcal{A}}%
+}(Y-\gamma_{j})$. Then $v_{f}(\widetilde{p})=\Int({\widetilde{\mathcal{A}}})$,
+and this number is the maximum valuation $v_{f}(p)$, for $p\in {\mathcal{P}_{X}}[Y]$ 
+monic in $Y$ of degree $d$. %We write $o(\varGamma,d)=v_{f}(\tilde{p})$.
+\end{lemma}
+
+\begin{proof}
+It is clear from the definitions that $v_{f}(\widetilde{p})=\Int({\widetilde
+{\mathcal{A}}})$. That this number is the maximum valuation $v_{f}(p)$ 
+as claimed follows as in the proof of \cite[Theorem 5.1]{vanHoeij94},
+where the case $d=n-1$ is treated. 
+\end{proof}
+
+\begin{notation} In the situation of the lemma, we write $o(\varGamma,d)
+=v_{f}(\tilde{p})$. In case $d = n-1$, we abbreviate
+\[
+\Int_{i}= \Int(\{1,\dots,i-1,i+1, \dots,n\}) = \sum_{j\neq i}v(\gamma
+_{i}-\gamma_{j}).
+\]
+\end{notation}
+
+\begin{example}
+\label{exampleOneBranch} Let $f=(Y^{2}+2X^{3})+Y^{3}\in{\mathbb{Q}}[X,Y]$. The
+Puiseux expansions of $f$ are
+\begin{align*}
+\gamma_{1}  &  =a_{1}X^{3/2}+X^{3}+\dots\;,\\
+\gamma_{2}  &  =a_{2}X^{3/2}+X^{3}+\dots\;,\\
+\gamma_{3}  &  =-1-2X^{3}+\dots\;,
+\end{align*}
+where $a_{1}, a_{2}$ are the roots of $X^{2}=-2$. Then $\Int_{1} = 3/2 + 0 =
+3/2$, $\Int_{2} = 3/2 + 0 = 3/2$, and $\Int_{3} = 0 + 0 = 0$, so that both $i
+= 1$ and $i=2$ maximize the valuation. Taking $i = 1$, we get $\widetilde{p} =
+(Y - \gamma_{2})(Y - \gamma_{3})$ and $o(\varGamma,2) = e(\widetilde{p}) 
+= \lfloor3/2\rfloor=1$.
+%is the maximal valuation $v_{f}(p)$ in degree $d=2$.
+\end{example}
+
+\begin{example}
+\label{exampleTwoBranches-int} 
+Let $f = (Y^3+X^8)(Y^6 + Y^3X^7 - 2Y^3X^4 + X^8) + X^{20}
+\in{\mathbb{Q}}[X,Y]$ be the polynomial from Example \ref{exampleTwoBranches}%
+. The Puiseux expansions of $f$ at $X = 0$ are 
+\begin{multicols}{3}
+\noindent
+\begin{align*}
+\gamma_{1} &= -X^{8/3}+ \dots, \\
+\gamma_{2} &= \xi_{1}X^{8/3} + \dots, \\
+\gamma_{3} &= \xi_{2}X^{8/3} + \dots, \\
+\end{align*}
+\end{multicols}
+\vspace{-1cm}
+\begin{multicols}{2}
+\noindent
+\begin{align*}
+\gamma_{4} &= X^{4/3} + \xi_3 X^{17/6} + \dots, \\
+\gamma_{5} &= -\xi_{1}X^{4/3} + \xi_{5} X^{17/6} + \dots, \\
+\gamma_{6} &= -\xi_{2}X^{4/3} + \xi_{7} X^{17/6} + \dots, \\
+\gamma_{7} &= X^{4/3} + \xi_4 X^{17/6} + \dots, \\
+\gamma_{8} &= -\xi_{1}X^{4/3} + \xi_{6} X^{17/6} + \dots, \\
+\gamma_{9} &= -\xi_{2}X^{4/3} + \xi_{8} X^{17/6} + \dots
+\end{align*}
+\end{multicols}
+\noindent where $\xi_{1}, \xi_{2}$ are the complex roots of $X^{3} + 1 = 0$;
+$\xi_{3}, \xi_{4}$ are the roots of $X^{2} + 1/9 = 0$;  
+$\xi_{5}, \xi_{6}$ are the roots of $X^{2} + 1/9 \xi_{1} - 1/9 = 0$ and
+$\xi_{7}, \xi_{8}$ are the roots of $X^{2} + 1/9 \xi_{2} - 1/9 = 0$.
+
+Then $\Int_{1} = \Int_{2} = \Int_{3} = 2 \cdot 8/3 + 6 \cdot 4/3 = 40/3$ and
+$\Int_{4} = \Int_{5} = \Int_{6} = \Int_{7} = \Int_{8} = \Int_{9} = 3 \cdot 4/3 + 17/6 + 4 \cdot 4/3 = 73 / 6$.
+We conclude that $o(\varGamma,8) = \lfloor 40/3 \rfloor = 13$.
+% is the maximal valuation $v_{f}(p)$ in degree $d=5$.
+\end{example}
+
+% \begin{example}
+% \label{exampleTwoBranchesA-int} 
+% \todo{TWOBRANCHES modify this example using the new example with no inclusion}
+% Let $f = (Y^{3}-X^{7})(Y^{2} - X^{3})+Y^{6}
+% \in{\mathbb{Q}}[X,Y]$ be the polynomial from Example \ref{exampleTwoBranchesA}%
+% . The Puiseux expansions of $f$ at $X = 0$ are \begin{multicols}{2}
+% \noindent
+% \begin{align*}
+% \gamma_{1}  &= X^{7/3}+ \dots, \\
+% \gamma_{2}  &= \xi_{1}X^{7/3}+ \dots, \\
+% \gamma_{3}  &= \xi_{2}X^{7/3}+ \dots, \\
+% \gamma_{4}  &= X^{3/2}+ \dots, \\
+% \gamma_{5}  &= -X^{3/2}+ \dots, \\
+% \gamma_{6}  &= -1 + X^3 + \dots,
+% \end{align*}
+% \end{multicols}
+% \noindent where $\xi_{1}, \xi_{2}$ are the complex roots of $X^{3} - 1 = 0$.
+% Then $\Int_{1} = \Int_{2} = \Int_{3} = 7/3 + 7/3 + 3/2 + 3/2 + 0 = 23/3$,
+% $\Int_{4} = \Int_{5} = 3/2 + 3/2 + 3/2 + 3/2 + 0 = 6$, and $\Int_{6} = 0$. 
+% We conclude that $o(\varGamma,5) = 7$.
+% % is the maximal valuation $v_{f}(p)$ in degree $d=5$.
+% \end{example}
+
+\begin{remark}
+\label{rem:prop-max-val}
+In general, applying the trace map as in the proof of \cite[Theorem 5.1]{vanHoeij94},
+we see from Lemma \ref{lemma:intA} that for each $d$, we may characterize
+the number $o(\varGamma,d)$ also as the maximal valuation $v_{f}(p)$, 
+for $p\in K[X][Y]$ monic in $Y$ of degree $d$. Note that by construction, 
+$$o(\varGamma,1)\leq \dots \leq o(\varGamma,n-1).$$
+\end{remark}
+
+The reason for considering the valuations $v_{f}(p)$ is that they are 
+directly related to integrality:
+
+\begin{lemma}
+\label{lemma:integrality} Let $p\in K[X,Y]=K[X][Y]$ be monic in $Y$ of degree
+$d$. Then the integer part $\lfloor v_{f}(p)\rfloor$ of $v_{f}(p)$ is the
+integrality exponent of $p$ with respect to $f$, that is, it is the maximum number $e \in{\mathbb{N}}$ such that $p(x,y)/x^{e}$ is integral over
+$A=K[x,y]$.
+\end{lemma}
+
+\begin{proof}
+Note that $p(x,y)/x^{e}$ is integral over $A$ iff $v_{\gamma_{i}}(p(x,y)/x^{e}) \ge0$ 
+for each $1 \le i \le n$ (see \cite[Theorem 3.2.6]{Stichtenoth08} and 
+\cite[Section 2.4]{vanHoeij94}).  Since $v_{f}(p)$ is defined to be the minimum 
+of the $v_{\gamma_{i}}(p)$, the result follows.
+\end{proof}
+
+Taking Remark \ref{rem:prop-max-val} into account, we conclude that $o(\Gamma,d)$ is the {\emph{maximal integrality exponent
+of $f$ in degree $d$}}, as defined in Definition \ref{defn integrality exponent}. We note 
+$$
+E(f):=o(\Gamma,d-1),
+$$
+the {\emph{maximal integrality exponent of $f$}}.
+
+
+
+\subsection{Computation of the maximum integrality exponent $e$}
+\label{subsection:maxexp}
+Denote by $\gamma_{1}(X),\dots,\gamma_{n}(X)$ the Puiseux expansions of $f$ at
+$X=0$. As noted in \cite[Theorem 5.1]{vanHoeij94}, if we allow for a more
+general $\tilde{p}\in{\mathcal{P}_{X}}[Y]$ which is a polynomial in $Y$ with
+coefficients in Puiseux series in $X$, the maximal integrality exponent can be
+obtained by choosing $\{\eta_{1}(X),\dots,\eta_{n-1}(X)\}$ to be a subset of
+$\{\gamma_{1}(X),\dots,\gamma_{n}(X)\}$. In that paper it is also explained
+how to determine which subset to take (see also Section \ref{sect:max-expo}).
+
+The coefficients of $\tilde{p}$ may not lie in the ground field $K$, and
+furthermore $\tilde{p}$ may contain fractional exponents. As mentioned before,
+by using the trace map, van Hoeij proves that there exists $p\in K[X,Y]$ monic
+of $Y$--degree $n-1$ with $e(p)=e(\tilde{p})$.
+
+In \cite{vanHoeij94} these ideas are only used to fix bounds for the algorithm
+but not for constructing $p$. In this work, we show that $p$ can be easily
+constructed, using Hensel's Lemma to efficiently compute the product
+$(Y-\eta_{1}(X))\cdots(Y-\eta_{n-1}(X))$, or more precisely, the product of
+the truncated expansions of these factors up to appropriate degrees.
+
+\subsection{Hensel's Lemma\label{sec Hensel}}
+
+In this subsection and the following, we explain how to use Hensel's lemma to
+compute the products $(Y - \gamma_{1})\cdots(Y-\gamma_{s})$ up to any
+$X$--degree, with $\gamma_{1}, \dots, \gamma_{s}$ conjugate expansions
+belonging to a Puiseux segment or block, without computing each individual
+expansion. Computing all the expansions separately and then computing the
+product is usually much slower.
+
+We recall Hensel's Lemma.
+
+\begin{lemma}
+\label{lemma:hensel} Let $f \in K[[X]][Y]$ be a monic polynomial over the
+power series ring, and assume that $f(0, Y) = g_{0} h_{0}$ for monic
+polynomials $g_{0}, h_{0} \in K[Y]$ such that $\langle g_{0}, h_{0}\rangle=
+K[Y]$. Then there exist monic polynomials $g, h \in K[[X]][Y]$ such that
+
+\begin{enumerate}
+\item $f = gh$
+
+\item $g(0, Y) = g_{0}$, $h(0, Y) = h_{0}$.
+\end{enumerate}
+
+Moreover, for each $m \in{\mathbb{N}}$, there exist unique $g_{m}, h_{m} \in
+K[X,Y]$ of $X$--degree $m$ such that
+
+\begin{enumerate}
+\item $f \equiv g_{m} h_{m}$ in $(K[[X]] / \langle X^{m+1} \rangle)[Y]$
+
+\item $g_{m} \equiv g_{i}$, $h_{m} \equiv h_{i}$ in $(K[[X]]/ \langle X^{i+1}
+\rangle)[Y]$, $i = 0, \dots, m-1$.
+\end{enumerate}
+\end{lemma}
+
+These last conditions imply that the polynomials $g_{m}$ and $h_{m}$ can be
+computed inductively along the $X$--degree, solving for each $m$ a determined
+system of linear equations of $n$ equations and $n$ unknowns, where $n$ is the
+$Y$--degree of $f$. (For each $i$, $0 \leq i \leq n-1$, we get an equation by
+comparing the coefficients of $X^{m}Y^{i}$ in $f$ and in $g_{m}h_{m}$.) For
+further reference in the paper, we present this well-known procedure as
+Algorithm \ref{alg:Hensel}, omitting the actual computation steps. (This
+algorithm has been made available in \textsc{Singular}{} since version 3.1.3
+via the command \texttt{factmodd}.)
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Hensel's lifting}          % give the algorithm a caption
+\label{alg:Hensel}
+\begin{algorithmic}[1]
+\REQUIRE $f \in K[X,Y]$ irreducible polynomial, monic in $Y$; $g_0, h_0 \in K[Y]$ such that $f(0, Y) = g_0 h_0$ and $\langle g_0, h_0 \rangle = K[Y]$; $d \in \N_0$
+\ENSURE $g, h \in K[X,Y]$ such that $g(0, Y) = g_0$, $h(0, Y) = h_0$ and $f \equiv gh$ in $(K[[X]]/ \langle X^{d+1} \rangle)[Y]$
+\end{algorithmic}
+\end{algorithm}
+
+
+We will usually use Hensel's lifting to separate the component that vanishes
+at the origin from the component that vanishes outside. Alternatively, we
+could perform this decomposition by means of the Weierstrass Division Theorem.
+(See for example, \cite[Theorem 3.2.3]{JP}.) However, the use of Hensel's
+Lemma allows for more generality, since we do not need to move the singularity
+to the origin. This is particularly useful when the singularity has no
+rational coordinates, as we avoid to use algebraic extensions. Also the linear
+algebra techniques involved in Hensel's Lemma are usually faster than
+computing division of polynomials with remainders.
+
+In the following example, we show how to use the lemma to decompose a
+polynomial and compute the integral basis in a simple case.
+
+\begin{example}
+Let $f = (Y-X)(Y+X)(Y+2X) + Y^{7}$. There are $3$ Puiseux expansions at $Y =
+0$ and $4$ expansions outside $Y = 0$. (The degree of $f$ in $Y$ is $7$, so
+there must be a total of $7$ expansions.)
+
+We call $\gamma_{1} = X + \dots, \gamma_{2} = -X + \dots, \gamma_{3} = -2X +
+\dots$ the expansions at the origin and $\gamma_{4}, \dots, \gamma_{7}$ the
+expansions outside the origin. We want to compute $(Y-\gamma_{4}%
+)\cdots(Y-\gamma_{7})$ up to a given degree in $X$ without computing each
+expansion separately.
+
+Here $\Int_{i} = 2$ for $i = 1, 2, 3$ and this is maximal. So $e(\tilde g) =
+2$ and we need to compute the product up to degree $2$ in $X$.
+
+Since $f(0, Y) = Y^{3} + Y^{7}$, we take $g_{0} = Y^{3}$, $h_{0} = 1 + Y^{4}$,
+and apply Hensel's lemma to lift these factors up to degree $2$. We obtain
+$g_{2} = Y^{3} + 2XY^{2} -2X^{2}Y$ and $h_{2} = 5X^{2}Y^{2}-2XY^{3}+Y^{4}+1$,
+and we conclude that $(Y-\gamma_{4})\cdots(Y-\gamma_{7}) \equiv5X^{2}%
+Y^{2}-2XY^{3}+Y^{4}+1$ modulo $X^{3}$.
+
+Taking $i = 1$, to compute $p$, we still have to compute $\gamma_{2}$ and
+$\gamma_{3}$ up to degree $2$. We obtain $\bar\gamma_{2} = -X$ and $\bar
+\gamma_{3} = -2X$. Combining all this we compute
+\[
+p = \prod_{i=2}^{7} (Y - \bar\gamma_{i}) = (Y-X)(Y+X)(Y+2X)(5X^{2}Y^{2}%
+-2XY^{3}+Y^{4}+1).
+\]
+
+\end{example}
+
+\subsection{A local version of Hensel's Lemma}
+
+When we want to lift two factors $g$, $h$ that vanish at $Y = 0$ (for example,
+to compute $(Y-\gamma_{1})(Y-\gamma_{2})(Y-\gamma_{3})$ as in Example
+\ref{exampleTwoBranches} up to any given order), the condition $\langle g(0,
+Y), h(0,Y)\rangle= K[Y]$ is not satisfied.
+
+We explain how to transform the polynomials so that Hensel's lemma can still
+be applied.
+
+Let $f$ have the following Puiseux expansions at $0$:
+\begin{align*}
+\gamma_{1}  &  = a_{1}^{1} X^{t_{1}^{1}} + a_{2}^{1} X^{t_{2}^{1}} + \dots\\
+\gamma_{2}  &  = a_{1}^{2} X^{t_{1}^{2}} + a_{2}^{2} X^{t_{2}^{2}} + \dots\\
+&  \dots\\
+\gamma_{s}  &  = a_{1}^{s} X^{t_{1}^{s}} + a_{2}^{s} X^{t_{2}^{s}} + \dots
+\end{align*}
+and assume $t = t_{1}^{1} = \min_{1 \leq i \leq s}t_{1}^{i}$. We define $f_{0}
+= (Y-\gamma_{1}) \dots(Y-\gamma_{s})$, $f_{0} \in K[[X]][Y]$.
+
+We would like to replace $Y$ by $X^{t}Y$, so that we can factor out $X^{t}$ in
+all factors. But this will introduce fractional exponents in $f_{0}$, so we
+first write $t = u/v$ and replace $X$ by $X^{v}$ and $Y$ by $X^{u}Y$. We
+define
+\begin{align*}
+\tilde f_{0}(X, Y)  &  = f_{0}(X^{v}, X^{u}Y)\\
+&  = (X^{u} Y - (a_{1}^{1} X^{vt_{1}^{1}} + \dots)) \cdots(X^{u} Y -
+(a_{1}^{s} X^{vt_{1}^{s}} + \dots)\\
+&  = X^{su}(Y - (a_{1}^{1} + a_{2}^{1} X^{\tilde t_{2}^{1}} + \dots))\cdots(Y
+- (a_{1}^{s} X^{\tilde t_{1}^{s}} + \dots))
+\end{align*}
+and
+\begin{align*}
+F(X, Y)  &  = \tilde f_{0}(X, Y) / X^{su}\\
+&  = (Y - (a_{1}^{1} + a_{2}^{1} X^{\tilde t_{2}^{1}} + \dots))\cdots(Y -
+(a_{1}^{s} X^{\tilde t_{1}^{s}} + \dots)),
+\end{align*}
+with $F(X, Y) \in K[[X]][Y]$.
+
+So we can first use Hensel's lemma to compute the factor $f_{0}$ up to the
+required degree, and then compute $F$ as defined above.
+
+Now $F$ has factors that do not vanish at the origin. So we can use again
+Hensel's lemma to separate the factors that vanish at the origin from the
+factors that do not. We get $F=GH$. We obtain the factors $g$ and $h$ by
+reversing the transformations, $g(X,Y)=G(X^{1/v},Y/X^{u/v})$, and likewise for
+$h$.
+
+We thus arrive to Algorithm \ref{alg:SegmentSplitting}.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Segment splitting}          % give the algorithm a caption
+\label{alg:SegmentSplitting}
+\begin{algorithmic}[1]
+\REQUIRE $f \in K[X,Y]$ irreducible polynomial, monic of degree $s$ in $Y$, with no Puiseux expansions vanishing outside the origin; $d \in \N_0$.
+\ENSURE $g_1, \dots, g_k \in K[X,Y]$ such that the expansions of $g_i$ correspond to the $i$-th Puiseux segment of $f$, developed up to degree $d$.
+\STATE $t_1, \dots, t_k$ the different initial exponents of the Puiseux expansions of $f$ (which are obtained from the Newton polygon of $f$)
+\IF{$k = 1$} \RETURN $f$
+\ENDIF
+\STATE $t = u/v = \min\{t_1, \dots, t_k\}$, with $u, v \in \N$
+\STATE $\tilde f(X, Y) = f(X^v, X^uY)$
+\STATE $F = \tilde f / X^{su}$
+\STATE Compute $G_0, H_0 \in K[Y]$ such that $F(0, Y) = G_0 H_0$, $G_0 = Y^w$,
+for some $w \in \N$ and $Y \nmid H_0$
+\STATE $(G, H) = $ Hensel($F, G_0, H_0, vd$)
+\STATE $g_1 = G(X^{1/v}, Y/X^{u/v})$, $h = G(X^{1/v}, Y/X^{u/v})$
+\RETURN $\{g_1\} \cup \SegmentSplitting(h)$.
+\end{algorithmic}
+\end{algorithm}
+
+
+See also \cite[Theorem W]{JP} for an alternative approach extending the
+Weierstrass Division Theorem.
+
+\begin{example}
+We return to Example \ref{exampleTwoBranches}, $f=Y^{6}-(Y^{2}+2X^{3}%
+)((Y+2X^{2})^{2}+X^{5})$. We want to compute $(Y-\gamma_{1})(Y-\gamma_{2})$ up
+to order $5$. We first use Hensel's lemma to lift the factors $Y^{4}$ and
+$1+Y^{2}$ up to degree $8$ (we must lift up to this degree so that no
+information from $f$ is lost). We obtain {\tiny
+\begin{align*}
+f_{0}  &  =48X^{8}Y^{3}+46X^{8}Y^{2}-8X^{7}Y^{3}-16X^{8}Y-8X^{7}Y^{2}%
++32X^{6}Y^{3}+2X^{8}-4X^{6}Y^{2}\\
+&  -8X^{5}Y^{3}+8X^{7}+X^{5}Y^{2}+8X^{5}Y+4X^{4}Y^{2}+2X^{3}Y^{2}+4X^{2}%
+Y^{3}+Y^{4}\\
+f_{1}  &  =-48X^{8}Y+210X^{8}+8X^{7}Y-56X^{7}-32X^{6}Y+4X^{6}+8X^{5}%
+Y-X^{5}+12X^{4}-2X^{3}-4X^{2}Y+Y^{2}-1
+\end{align*}
+} (Note that $f_{1} = (Y-\gamma_{5})(Y-\gamma_{6})$ up to order $8$, so we can
+truncate it up to order $5$ to get the product of the expansions outside the origin.)
+
+The smallest $t$ is $t = u/v = 3/2$. We compute $\tilde f_{0} = f_{0}(X^{2},
+X^{3}Y) = X^{12}(48X^{13}Y^{3}-8X^{11}Y^{3}+46X^{10}Y^{2}+32X^{9}Y^{3}%
+-8X^{8}Y^{2}-8X^{7}Y^{3}-16X^{7}Y-4X^{6}Y^{2}+X^{4}Y^{2}+2X^{4}+4X^{2}%
+Y^{2}+4XY^{3}+Y^{4}+8X^{2}+8XY+2Y^{2}) = X^{12}F(X,Y)$.
+
+Now, $F(0, Y) = (Y^{2}+2)Y^{2}$ and we use Hensel's lemma to lift the factors
+$Y^{2}+2$ and $Y^{2}$. After lifting and mapping the factors back to the
+original $X$ and $Y$, we obtain
+\begin{align*}
+g  &  = -4X^{6}-8X^{5}Y+2X^{3}+Y^{2}\\
+h  &  = X^{5}+4X^{4}+4X^{2}Y+Y^{2}%
+\end{align*}
+Note that $g = (Y^{2} + 2X^{3})-8X^{5}Y-4X^{6}$ and $h = (Y+2X^{2})^{2}+X^{5}$
+are equal in the low degree terms to the factors appearing in $f$.
+
+We can now compute $p = (Y - \bar\gamma_{1})(Y - \bar\gamma_{2})(Y -
+\bar\gamma_{4})(Y - \bar\gamma_{5})(Y - \bar\gamma_{6}) = ((Y^{2} +
+2X^{3})-8X^{5}Y-4X^{6})Y(8X^{5}Y-X^{5}+12X^{4}-2X^{3}-4X^{2}Y+Y^{2}-1)$.
+\end{example}
+
+To separate all the Puiseux segments, we can use this method iteratively. In
+each step we separate the segment with smallest initial exponent from the
+rest. Now consider blocks inside a segment which have the same initial
+exponents but whose initial terms are not conjugate. In this case we can also
+use Hensel's lemma to split the blocks after applying the above
+transformation, hence we can still proceed in the same way.
+
+To be able to separate all blocks, it remains to consider the separation of
+blocks that have the same initial rational term (and therefore the same
+initial exponent). Suppose that $f_{1}$ is a factor of $f$ containing some
+Puiseux blocks of $f$ such that they all have the same initial terms $\eta=
+a_{1} X^{m_{1}} + \dots+a_{k} X^{m_{k}}$, $a_{i} \in K, m_{k} \in{\mathbb{N}%
+}_{0}$. (There can be fewer terms than in the rational part of the
+expansions.) In this case, we first apply the transformation $Y = Y_{1} +
+\eta$, and compute $f_{2}(X,Y_{1}) = f_{1}(X, Y_{1} + \eta)$. Then $f_{2}$
+will contain the same expansions as $f_{1}$ but without the initial terms
+$\eta$. We can now proceed as before to separate the blocks. After computing
+the factors corresponding to each block, we replace $Y_{1}$ by $Y - \eta$, to
+get the factor we were looking for.
+
+Algorithm \ref{alg:BlockSplitting} summarizes these ideas.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Block splitting}          % give the algorithm a caption
+\label{alg:BlockSplitting}
+\begin{algorithmic}[1]
+\REQUIRE $f \in K[X,Y]$ irreducible polynomial, monic of $Y$--degree $n$; $d \in \N_0$.
+\ENSURE $f_0, f_1, \dots, f_r$ such that the expansions of each $f_i$ are the same as the $i$-th Puiseux block of $f$ up to order $d$ in $X$.
+\STATE compute $g_0, h_0 \in K[Y]$ such that $g_0h_0 = f(0, Y)$, $g_0 = Y^k$ for some $k \in \N_0$ and $\langle g_0, h_0 \rangle = K[Y]$
+\STATE $(f_0, g) = $ Hensel$(f, g_0, h_0, d)$, where $f_0$ is the lifting of $h_0$ and $g$ is the lifting of $g_0$, up to order $d$ in $X$
+\STATE $\{g_1, \dots, g_s\} = \SegmentSplitting(g, d)$, the factors corresponding to the different Puiseux segments of $g$
+\FORALL{$g_i$, $i = 1, \dots, s$}
+\STATE $\eta_i := $ the common rational part of all expansions in $g_i$
+\STATE $\tilde g_i = g_i(X, Y + \eta_i)$
+\STATE $\{\tilde g_{i,1}, \dots, \tilde g_{i, r_i}\} = $ BlockSplitting($\tilde g_i, d$)
+\STATE $g_{i,j}(X,Y) = \tilde g_{i, j}(X, Y - \eta_i)$, $j = 1, \dots, r_i$
+\ENDFOR
+\STATE $\{f_1, \dots, f_r\} = \cup_{i = 1}^s \{g_{i,1}, \dots, g_{i, r_i}\}$
+\RETURN $\{f_0, f_1, \dots, f_r\}$
+\end{algorithmic}
+\end{algorithm}
+
+
+The ideas from \cite[Theorem 5.1.20]{JP} can in some cases also be used for
+our purpose. However, the cited theorem is not as general as we require, and
+the details on how to initiate the algorithm are not given.
+
+Our final goal is to separate all factors corresponding to different conjugacy
+classes of expansions. In this case, we do not know of any algorithm to do it
+without working in algebraic extensions. We compute the conjugate Puiseux
+expansions $\bar{\gamma}_{1},\dots,\bar{\gamma}_{s}$ up to the desired degree
+and then compute the product $(Y-\bar{\gamma}_{1})\cdots(Y-\bar{\gamma}_{s})$.
+This last step is only needed when a Puiseux block contains more than one
+conjugacy class of expansions.
+
+In Algorithm \ref{alg:Splitting} we combine all the contents of this subsection in a general splitting algorithm.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Splitting}          % give the algorithm a caption
+\label{alg:Splitting}
+\begin{algorithmic}[1]
+\REQUIRE $f \in K[X,Y]$ irreducible polynomial, monic of $Y$-degree $n$; $e \in \N_0$.
+\ENSURE $L = \{f_0, f_1, \dots, f_r\}$ such that the expansions of each $f_i$ are the same as the $i$-th conjugacy class of Puiseux expansions of $f$ up to order $e$ in $X$.
+\STATE compute $\{g_0, g_1, \dots, g_s\} = \BlockSplitting(f, e)$
+\STATE $L = \{g_0\}$
+\FOR{$i = 1, \dots, s$}
+\STATE Compute $\varGamma = \{\gamma_1, \dots, \gamma_l\}$, the singular part of the expansions of $g_i$
+\STATE $k = $ number of conjugacy classes in $\varGamma$
+\IF{$k > 1$}
+\FOR{$j = 1, \dots, k$}
+\STATE Compute $\varGamma_j = \{\gamma_{j,1}, \dots, \gamma_{j, s_j}\}$, the expansions of the $j$-th conjugacy class of $\varGamma$, up to order $e$ in $X$
+\STATE $h_j = (Y- \gamma_{j, 1}) \cdots (Y - \gamma_{j, s_j})$
+\ENDFOR
+\STATE $L = L \cup \{h_1, \dots, h_k\}$
+\ELSE
+\STATE $L = L \cup \{g_i\}$
+\ENDIF
+\ENDFOR
+\RETURN $L$.
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Local integral basis}
+
+\label{section:lowdegree}
+
+Let $g \in K[[X]][Y]$ be an irreducible Weierstrass polynomial of degree $m$. We show how to compute the integral basis for $\overline{K[[X]][Y]/\langle g \rangle}$ over $K[[X]]$. That is, we compute the polynomials $p_1$, \dots, $p_{m-1}$ described in Lemma \ref{lemma loc int bas shape} and their corresponding integrality exponents.
+
+For each $d$, $0 \leq d \leq m-1$, we look for a polynomial $p_d \in K[X][Y]$ of degree $d$ with maximal valuation
+at $g$. 
+
+Let $\varGamma$ be the set of Puiseux expansions of $g$. Since we are assuming $g$ is irreducible, all the expansions of $g$ are conjugate. 
+
+%For any subset $\varDelta$ of
+%expansions of $g$ of $s$ elements, and any $c\in{\mathbb{N}}_{0}$, $0\leq
+%c<s$, we set $g_{\varDelta}=\prod_{\delta\in\varDelta}(Y-\delta)
+%\in{\mathcal{P}_{X}}[Y]$ and define
+%\[
+%o(\varDelta,c)=\max_{\substack{N\subset\varDelta \\\#N = c}}\left\{
+%v_{g_{\varDelta}}\left(  \prod_{\eta\in N}(Y-\eta)\right)  \right\}  .
+%\]
+
+For any $d\in{\mathbb{N}}_{0}$, $0 \leq d < m$, we define
+\[
+o(\varGamma, d)=
+\max_{\substack{N\subset\varGamma \\\#N = d}}\left\{v_{g}\left(  \prod_{\eta\in N}(Y-\eta)\right)  \right\}.
+\]
+
+Recall that for a given $N \subset\varGamma$, we have the formula
+\[
+v_{g}\left(  \prod_{\eta\in N}(Y - \eta)\right)  = \min_{\delta
+\in\varGamma\setminus N} \left\{  \sum_{\eta\in N} v(\delta- \eta)\right\}  .
+\]
+
+To compute $o(\varGamma,d)$, $1 \leq d < m$, we do not apply the above
+formulas but we compute a polynomial $p_d \in K[X,Y]$ of $Y$--degree $d$ such
+that $v_{g}(p_d)=o(\varGamma,d)$, recursively truncating the expansions of $g$. 
+
+We assume first that there exists $t\in\mathbb{Q}$ such that the conjugated expansions $\gamma_{1},\dots,\gamma_{m}$ of $g$ 
+agree in the terms of degree lower than $t$ and have conjugate coefficients
+$c_{i}\in\overline{K}$ at the monomial $X^{t}$, that is%
+\[
+\gamma_{i}=a_{1}X^{d_{1}}+a_{2}X^{d_{2}}+\dots+a_{k}X^{d_{k}}+c_{i}X^{t}+\dots
+\]
+where $a_{j}\in K$ and $d_{j}\in{\mathbb{N}}$ for $1 \le j \le k$. That is, the inital part $a_{1}X^{d_{1}}+a_{2}X^{d_{2}}+\dots+a_{k}X^{d_{k}}$ is rational.
+To compute the numerator of the element of degree $d$ in the integral basis, we truncate $\gamma_{i}$ to
+$\bar{\gamma}_{i}$ for $1 \le i \le d$ to degree $d_{k}$ and we set%
+\[
+p_d=(Y-\bar{\gamma}_{1}) \cdots(Y-\bar{\gamma}_{d}) \in K[X,Y]
+\]
+
+\begin{lemma}
+\label{lemma:onecharexp} The polynomial $p_d$ defined above have maximal integrality exponents among all monic polynomials of degree $d$ in $Y$.
+\end{lemma}
+
+\begin{proof}
+Let $\tilde p_d \in \Px[y]$ be an element of degree $d$ in $Y$ of largest valuation $e_d$ at $g$. We know that we can take $\tilde p_d = (Y - \gamma_{i_1}) \dots (Y - \gamma_{i_d})$ for some $1 \le i_1 \le \dots \le i_d \le m$. Let $i'$ be an index not appearing in $\{i_1, \dots, i_d\}$. We have by construction%
+\[
+v_{g}(\tilde p_d) = v_{\gamma_{i'}}(\tilde p_d) = \sum_{j=1}^{d}v(\gamma_{i'}%
+-\gamma_{j}) =\sum_{j=1}^{d}v(\gamma_{i'}-\bar{\gamma}_{j}) = v_{\gamma_{i'}%
+}(p_d).
+\]
+
+Since $\gamma_{1}, \dots, \gamma_{s}$ are conjugate and $p_d \in K[X,Y]$,
+$v_{\gamma_{j}}(p_d) = v_{\gamma_{i'}}(p)$ for $1 \leq j \leq m$. 
+
+Recall that $v_{g}(p_d) = \min_{1 \leq j \leq s} v_{\gamma_{j}}(p_d)$. So
+$v_{g}(p_d) = v_{g}(\tilde p_d)$, as wanted.
+\end{proof}
+
+In the general case, the truncation has to be done
+iteratively. We describe a recursive process to obtain $p_d$, the numerator of the integral basis of degree $d$ in $Y$.
+
+Let $\tilde p_d \in \Px[y]$ be as in Lemma \ref{lemma:onecharexp}.
+
+%starting with $g_{0}= \prod_{j=1}^{s} (y-\bar{\gamma}_{j})\in K[x,y]$.
+
+The singular parts%
+\[
+\gamma_{j}^{\operatorname{sing}}=a_{1}^{j}X^{t_{1}}+\dots+a_{k}^{j}X^{t_{k}%
+}\text{, }t_{1}<...<t_{k}%
+\]
+of the expansions $\gamma_{j}$, $1 \leq j \leq m$, are pairwise different and
+algebraically conjugate over $K((X))$.
+
+Since $\gamma_{1}^{\operatorname{sing}}\neq\gamma_{j}^{\operatorname{sing}}$,
+if we truncate the expansions $\gamma_{j}$, $1 \leq j \leq m$, to degree
+$t_{k-1}$:
+\[
+\gamma^{(1)}_{j}=a_{1}^{j}X^{t_{1}}+\dots+a_{k-1}^{j}X^{t_{k-1}}
+\]
+and define
+\[
+\tilde q=%
+%TCIMACRO{\tprod \nolimits_{j=2}^{s}}%
+%BeginExpansion
+{\textstyle\prod\nolimits_{j=1}^{d}}
+%EndExpansion
+(Y-\gamma^{(1)}_{i_j}),
+\]
+we have%
+\[
+v_{\gamma_{i'}}(\tilde q)=v_{\gamma_{i'}}(\tilde{p_d}).
+\]
+for any $i' \not\in \{i_1, \dots, i_d\}$. That is, the valuation at $\gamma_{i'}$ does not decrease.
+
+For simplicity, we explain first how to compute recursively the element of degree $m-1$, assuming $\tilde p_{m-1} = (Y-\bar{\gamma}_{2}) \cdots(Y-\bar{\gamma}_{m})$.
+
+For the recursion, we define $g_{0} = \prod_{j = 1}^{m} (Y-\gamma_{j})$ and
+$\overline{g_{0}} = \prod_{j = 1}^{m} (Y-\gamma^{(1)}_{j})$. Since $t_{k}$ was
+the smallest integer for which all the truncated expansions were different,
+the expansions $\gamma^{(1)}_{j}$, $1 \le j \le m$, can now be grouped into
+sets of identical expansions, each set having the same number of elements.
+Denote by $\eta_{1},\dots,\eta_{r}$ the mutually distinct expansions, and set
+$g_{1}=(Y-\eta_{1})\cdots(Y-\eta_{r}) \in K[X,Y]$. By construction
+$\overline{g_{0}} = g_{1}^{u_{1}}$, with $u_{1}=s/r \in{\mathbb{N}}$.
+
+We start the $i$-th step by applying the whole procedure inductively to
+$g_{i-1}$, computing $\overline{g_{i-1}}$, $g_{i}$ and $u_{i}$ such that
+$\overline{g_{i-1}}=g_{i}^{u_{i}}$ and $\overline{g_{i-1}}$ comes from
+truncating the expansions of $g_{i-1}$. In each step the degree $r_{i}$ of
+$g_{i}$ is smaller or equal than the degree $r_{i-1}$ of $g_{i-1}$, and it
+will be equal to $1$ after a finite number $w$ of steps (bounded by the degree
+$t_{k}$ of the expansions in $g_{0}$). For that value $w$, $r_{w}=1$ and all
+the expansions in $g_{w}$ are equal. The desired polynomial is
+\[
+p_{s-1}=g_{1}^{u_{1}-1}g_{2}^{u_{2}-1}\cdots g_{w}^{u_{w}-1}\in K[X,Y].
+\]
+We obtain Algorithm \ref{alg:Truncate}.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Truncated Factor}          % give the algorithm a caption
+\label{alg:Truncate}
+\begin{algorithmic}[1]
+\REQUIRE $\Delta = \{\gamma_i = a_1^{(i)} X^{t_1} + \dots + a_k^{(i)} X^{t_k}\}_{1 \leq i \leq m}$, a conjugacy class of Puiseux series of finite length.
+\ENSURE $q \in K[X, Y]$ of degree $m-1$ in $Y$ such that $v_{\gamma_1}(q) = v_{\gamma_1}(\tilde q)$, with $\tilde q = (Y - \gamma_2)\cdots (Y-\gamma_m)$.
+\STATE Set $\eta_1, \dots, \eta_r$ the different expansions in the set $\{\overline{\gamma_1}^{t_{k-1}}, \dots,  \overline{\gamma_s}^{t_{k-1}}\}$
+\STATE $p = (Y- \eta_1)\cdots(Y-\eta_r)$
+\STATE $u = s / r$
+\IF{$r > 1$}
+\STATE $p' = \TruncatedFactor(\{\eta_1, \dots, \eta_r\})$
+\RETURN $q = p^{u-1}p'$.
+\ELSE
+\RETURN $q = p^{u-1}$.
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{lemma}
+\label{lemma:truncatedFactor} With notation as above, let $p_{m-1} =
+\text{TruncatedFactor}(\gamma_{1}, \dots, \gamma_{m})$. Then $p_{m-1}$ has maximal valuation at $g$ 
+over all monic polynomials of degree $m-1$ in $Y$.
+\end{lemma}
+
+\begin{proof}
+As in the proof of Lemma \ref{lemma:onecharexp}, it is enough to show that
+$v_{\gamma_{1}}(p_{m-1}) = v_{\gamma_{1}}(\tilde p_{m-1})$. Let $\overline{\gamma_{2}}, \dots, \overline
+{\gamma_{m}}$ be the Puiseux expansions of $p_{m-1}$, correspoding to truncations of
+the expansions $\gamma_{2}, \dots, \gamma_{m}$ of $g$. By construction,
+$v(\gamma_{1} - \overline{\gamma_{i}}) = v(\gamma_{1} - \gamma_{i})$ for $i =
+2, \dots, m$. Hence $v_g(p_{m-1}) = v_{\gamma_1}(p_{m-1}) = v_{\gamma_{1}}(\tilde p_{m-1}) = v_g(\tilde p_{m-1})$ as wanted.
+\end{proof}
+
+\begin{example}
+\label{exa:conj-classes} Returning to Example \ref{examplePuiseux}, the
+singular parts of the Puiseux expansions are
+\begin{align*}
+\gamma_{1}^{\operatorname{sing}}  &  =iX^{3/2}+(-1/2i-1/2)X^{7/4}+1/4iX^{2}\\
+\gamma_{2}^{\operatorname{sing}}  &  =iX^{3/2}+(-1/2i-1/2)X^{7/4}-1/4iX^{2}\\
+\gamma_{3}^{\operatorname{sing}}  &  =iX^{3/2}+(1/2i+1/2)X^{7/4}+1/4iX^{2}\\
+\gamma_{4}^{\operatorname{sing}}  &  =iX^{3/2}+(1/2i+1/2)X^{7/4}-1/4iX^{2}\\
+\gamma_{5}^{\operatorname{sing}}  &  =-iX^{3/2}+(1/2i-1/2)X^{7/4}+1/4iX^{2}\\
+\gamma_{6}^{\operatorname{sing}}  &  =-iX^{3/2}+(1/2i-1/2)X^{7/4}-1/4iX^{2}\\
+\gamma_{7}^{\operatorname{sing}}  &  =-iX^{3/2}+(-1/2i+1/2)X^{7/4}+1/4iX^{2}\\
+\gamma_{8}^{\operatorname{sing}}  &  =-iX^{3/2}+(-1/2i+1/2)X^{7/4}-1/4iX^{2}%
+\end{align*}
+with $i^{2}=-1$.
+
+Truncating $\gamma_{i}^{\operatorname{sing}}$ to degree $7/4$ we obtain
+\begin{align*}
+\overline{\gamma_{1}}^{7/4}  &  =\overline{\gamma_{2}}^{7/4}=iX^{3/2}%
++(-1/2i-1/2)X^{7/4}\\
+\overline{\gamma_{3}}^{7/4}  &  =\overline{\gamma_{4}}^{7/4}=iX^{3/2}%
++(1/2i+1/2)X^{7/4}\\
+\overline{\gamma_{5}}^{7/4}  &  =\overline{\gamma_{6}}^{7/4}=-iX^{3/2}%
++(1/2i-1/2)X^{7/4}\\
+\overline{\gamma_{7}}^{7/4}  &  =\overline{\gamma_{8}}^{7/4}=-iX^{3/2}%
++(-1/2i+1/2)X^{7/4}%
+\end{align*}
+hence $u_{1}=2$ and%
+\begin{align*}
+g_{1}  &  =(Y-\overline{\gamma_{1}}^{7/4})(Y-\overline{\gamma_{3}}%
+^{7/4})(Y-\overline{\gamma_{5}}^{7/4})(Y-\overline{\gamma_{7}}^{7/4})\\
+&  =Y^{4}+2X^{3}Y^{2}+2X^{5}Y+X^{6}+1/4X^{7}%
+\end{align*}
+Applying the whole procedure inductively to $g_{1}$ we obtain $g_{2}%
+=Y^{2}+X^{3}$, $u_{2} = 2$ and $g_{3} = Y$, $u_{3} = 2$. Combining the
+factors, we get
+\[
+g=g_{1}^{u_{1}-1}g_{2}^{u_{2}-1}g_{3}^{u_{3}-1}=\left(  Y^{4}+2X^{3}%
+Y^{2}+2X^{5}Y+X^{6}+\frac{1}{4}X^{7}\right)  (Y^{2}+X^{3})Y.
+\]
+
+\end{example}
+
+For computing the elements of any degree $d$, $1 \le d \le m-1$, we can easily extend the above construction. We getAlgorithm \ref{alg:TruncateGeneral}.
+
+\begin{lemma}
+\label{lemma int bas shape}
+Let $g \in K[[X]][Y]$ be a Weierstrass polynomial of degree $m$ in $Y$ . 
+Let $\varGamma = \{\gamma_{1}, \dots, \gamma_{m}\}$ be the expansions
+of $g$ at the origin, which correspond all to the same conjugacy class. Then, for
+any $c$, $1 \le c < m$, the output $p_{c} = \mathtt{TruncatedFactorGeneral}(\varGamma,
+c)$ is a polynomial with maximal valuation at the origin in the ring
+$K[[X]][Y]/\langle g \rangle$ among all polynomials in $K[X,Y]$ monic of degree
+$c$ in $Y$.
+\end{lemma}
+
+\begin{proof}
+Let $\bar\gamma_{1}, \dots, \bar\gamma_{s}$ be the singular part of the
+expansions in $\varGamma$. Let $t_{k}$ be the degree in $X$ of these
+expansions. Let $g_{0}, \overline{g_{0}}, \dots, g_{w-1}, \overline{g_{w-1}},
+g_{w}$ be defined as before.
+
+We have noted in Section \ref{subsection:maxexp} that a polynomial $p_{d}$ satisfying the requirements of the
+lemma can be chosen so that all the Puiseux expansions of $p_{d}$ at the
+origin are truncations of the expansions in $\varGamma$. This implies that we
+can take $p_{d}$ to be a product $p_{d} = g_{1}^{d_{1}} \dots g_{w}^{d_{w}}$
+of the polynomials $g_{i}$ with appropriate exponents. To find the exponents,
+we note that for all $i$ the polynomials $g_{i+1}^{u_{i+1}}$ and $g_{i}$ have
+the same degree, but the valuation of $g_{i}$ at $g$ is larger than the
+valuation of $g_{i+1}^{u_{i+1}}$ (since the expansions are developed up to a
+larger degree). Hence, to construct $p_{d}$, we must first take $d_{1}$ as
+large as possible. Then maximize $d_{2}$ and so on iteratively. This is done
+by Algorithm \ref{alg:TruncateGeneral}.
+\end{proof}
+
+We can now compute $o(\varGamma, c)$ by the formula
+\[
+o(\varGamma, c) = \sum_{\eta\in N} v(\gamma- \eta),
+\]
+where $N = \{\eta_{1}, \dots\eta_{d}\}$ are the expansions appearing in
+$p_{d}$ and $\gamma\in\varGamma$. (For any expansion $\gamma\in\varGamma$ the
+result of the sum is the same, because conjugating the above expression does
+not modify $N$.)
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Truncated Factor General}          % give the algorithm a caption
+\label{alg:TruncateGeneral}
+\begin{algorithmic}[1]
+\REQUIRE $\Delta = \{\gamma_i = a_1^{(i)} X^{t_1} + \dots + a_k^{(i)} X^{t_k}\}_{1 \leq i \leq s}$, a conjugacy class of Puiseux series of finite length; $c \in \N$, $c < s$.
+\ENSURE $p \in K[X, Y]$ of $Y$--degree $c$ such that $v_{f_\Delta}(p) = v_{f_\Delta}(\tilde p)$, with $\tilde p$ the element in $\Px[Y]$ of degree $c$ with maximal valuation at $f_\Delta$.
+\STATE Set $\eta_1, \dots, \eta_r$ the different expansions in the set $\{\overline{\gamma_1}^{t_{k-1}}, \dots,  \overline{\gamma_s}^{t_{k-1}}\}$
+\STATE $u = \lfloor c / r \rfloor$, $c' = c - ur$
+\STATE $g_1 = \TruncatedFactorGeneral(\{\eta_1, \dots, \eta_r\}, c')$
+\IF{$u > 0$}
+\STATE $g = (Y- \overline{\gamma_1}^{t_{k-1}})\cdots(Y-\overline{\gamma_d}^{t_{k-1}})$
+\RETURN $p = g^u g_1$.
+\ELSE
+\RETURN $p = g_1$.
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{example}
+We carry on Example \ref{exa:conj-classes}, computing all the numerators of
+the elements of the integral basis. We have obtained that the element of the
+integral basis of degree $m-1 = 7$ is the product $p_{7} = g_{1}
+g_{2} g_{3}$, where $g_{1}$, $g_{2}$ and $g_{3}$ have degrees $4$, $2$ and $1$
+respectively. To obtain the numerators of the elements of the integral basis
+of smaller degree $d$, $1 \le d \le 6$, following Algorithm
+\ref{alg:TruncateGeneral}, we have to first take the largest possible power of
+$g_{1}$ so that the total degree is smaller than or equal to $d$, then choose
+the power of $g_{2}$ in the same way and finally the power of $g_{3}$. We get
+the following elements $p_{6} = g_{1} g_{2}$, $p_{5} = g_{1} g_{3}$, $p_{4} =
+g_{1}$, $p_{3} = g_{2} g_{3}$, $p_{2} = g_{2}$ and $p_{1} = g_{3}$.
+
+The denominators are powers of $x$. To obtain the exponents, we compute
+$o(\varGamma, d)$ for $1 \le d \le 7$ by looking at the expansions
+corresponding to each $g_{i}$, $i =1, 2, 3$, given in Example
+\ref{exa:conj-classes}. Setting $N_{g_{i}}$ the expansions appearing in
+$g_{i}$, $i = 1, 2, 3$, we have $\sum_{\eta\in N_{g_{1}}} v(\gamma- \eta) =
+27/4$, $\sum_{\eta\in N_{g_{2}}} v(\gamma- \eta) = 13/4$ and $\sum_{\eta\in
+N_{g_{3}}} v(\gamma- \eta) = 3/2$ for any $\gamma\in\varGamma$. Hence
+$o(\varGamma, 1) = 3/2$, $o(\varGamma, 2) = 13/4$, $o(\varGamma, 3) = 13/4 +
+3/2 = 19/4$, $o(\varGamma, 4) = 27/4$, $o(\varGamma, 5) = 27/4 + 3/2 = 33/4$,
+$o(\varGamma, 6) = 27/4 + 13/4 = 10$ and $o(\varGamma, 7) = 27/4 + 13/4 + 3/2
+= 23/2$. The exponents in the denominators are the integer part of these
+valuations and the integral basis is
+\[
+\left\{  \frac{g_{3}}{x}, \frac{g_{2}}{x^{3}}, \frac{g_{2} g_{3}}{x^{4}},
+\frac{g_{1}}{x^{6}}, \frac{g_{1} g_{3}}{x^{8}}, \frac{g_{1} g_{2}}{x^{10}},
+\frac{g_{1} g_{2} g_{3}}{x^{11}}\right\}.
+\]
+\end{example}
+
+\vspace{0.5cm}
+
+We have shown how to compute the local integral basis when $g \in K[[X]][Y]$ is an irreducible Weierstrass polynomial.
+For the general case when $g$ is not irreducible, we add up all the contributions of the branches following Proposition \ref{prop semilocal}.
+We get Algorithm \ref{alg:loclocbasis}.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Local integral basis}          % give the algorithm a caption
+\label{alg:loclocbasis}
+\begin{algorithmic}[1]
+\REQUIRE $L = \{\{\varGamma_1, f_1\}, \dots, \{\varGamma_r, f_r\}$\}, where $\varGamma_i = \{\gamma_{i,1}, \dots, \gamma_{i,s_i}\}$ is the set of singular parts of the $i$-th conjugacy class of expansions that vanish at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$ and $f_i$ is the corresponding factor developed up to $X$--degree $E(f)$.
+\ENSURE $\{(p_0, e_0), \dots, (p_{m}, e_{m})\}$ such that $\{\frac{p_0}{x^{e_0}}, \dots, \frac{p_{m-1}}{x^{e_{m-1}}}\}$ is the local integral basis at the origin and $(p_m, e_m) = (f, \infty)$.
+\STATE $m = \deg_Y(f_1 \cdots f_r)$
+\FOR{$i = 1, \dots, r$}
+\STATE $h = \prod_{j \neq i} f_j$
+\FOR{$j = 0, \dots, m-s_i-1$}
+\STATE $p_j = Y^j$, $e_j =$ the integrality exponent of $p_j$
+\ENDFOR
+\FOR{$c = 0, \dots, s_i-1$}
+\STATE $q_c = \TruncatedFactorGeneral(\varGamma_i, c)$
+\STATE $p_{m-s+c} = h \cdot q_c$, $e_{m-s+c} =$ the integrality exponent of $p_{m-s+c}$
+\ENDFOR
+\STATE $A^{(i)} = \left\langle \frac{p_{0}}{x^{e_{0}}}, \frac{p_{1}}{x^{e_{1}}},
+\dots, \frac{p_{m-1}}{x^{e_{m-1}}}\right\rangle _{K[x]}$
+\ENDFOR
+\STATE From $A^{(1)} + \dots + A^{(r)}$, compute the integral basis $\{b_0, \dots, b_{m-1}\}$, as explained in Section \ref{sect:Int-basis-via-norm}
+\RETURN $\{(p_0, e_0), \dots, (p_{m}, e_{m})\}$, where $p_i$ the denominator of $b_i$ and $e_i$ the exponent of the numerator for $0 \leq i \leq m-1$ and $(p_m, e_m) = (f, \infty)$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{example}
+\label{exampleTwoBranches-locloc} 
+Let $f = (Y^3+X^8)(Y^6 + Y^3X^7 - 2Y^3X^4 + X^8) + X^{20}
+\in{\mathbb{Q}}[X,Y]$, from Example \ref{exampleTwoBranches}, and $A = K[X,Y]
+/ \langle f \rangle$. 
+
+%The expansions of $f$ are $\gamma_{1,2,3} = \xi_{1,2,3}X^{7/3} +
+%\dots$ and $\gamma_{4,5} = \pm X^{3/2} + \dots$, where $\xi_{i}$, $i=1,2,3$,
+%are the roots of $X^{3} - 1 = 0$.
+
+As we have seen in Example \ref{exampleTwoBranches-int}, the maximal
+integrality exponent is $e = 13$.
+
+We have two conjugacy classes, $\varGamma_{1} = \{\gamma_{i}: i=1, 2, 3\}$ and 
+$\varGamma_{2} = \{\gamma_{i}: i = 4, \dots, 9\}$, so we compute
+two local rings $A^{(1)}$ and $A^{(2)}$.
+
+For $A^{(1)}$, the development of $(Y - \gamma_{4}) \dots (Y-\gamma_{9})$ up to order
+$13$ in $X$ is $h_1 = Y^6 + Y^3X^7 - 2Y^3X^4 + X^8$ (we omit the details
+of this computation which can be done using Hensel's lemma). Since $n - s_{1}
+- 1 = 9 - 3 - 1 = 5$, the first $5$ numerators of the integral basis are the powers of $y$. 
+For $c = 0, 1, 2$, the truncated factors corresponding to
+$\varGamma_{1}$ are $1, Y, Y^{2}$. Therefore, the numerators of the generators
+of $A^{(1)}$ are $1, y, y^2, y^3, y^4, h_1, h_1 y, h_{1} y^{2}$. Computing
+the integrality exponents, we get the integral basis 
+{\small
+\[
+A^{(1)} = \left\langle 1,
+y, y^2, y^3, y^4, y^5, \frac{h_1}{x^8}, \frac{h_{1} y}{x^{10}}, \frac{h_{1} y^{2}}{x^{13}}\right\rangle_{K[x]}.
+\]
+}
+
+Similarly, for $A^{(2)}$, the development of $(Y - \gamma_{1})(Y - \gamma_{2})(Y
+- \gamma_{3})$ up to degree $13$ is $h_2 = Y^3 + x^8$. Now $n - s_{2} - 1 = 9 - 6 - 1 = 2$ and the
+first numerators of the integral basis are $1, y, y^2$. For $c = 0, \dots, 5$, the truncated factors corresponding to
+$\varGamma_{2}$ are $1, Y, Y^2, Y^3 - X^4, (Y^3 - X^4)Y, (Y^3 - X^4)Y^2$. Computing the integrality exponents, we get 
+{\small
+\[
+A^{(2)} = \left\langle 1, y, y^2, 
+\frac{h_{2}}{x^{4}}, \frac{h_{2} y}{x^{5}}, \frac{h_{2} y^2}{x^{6}}, 
+\frac{h_{2}(y^3-x^4)}{x^{9}}, \frac{h_{2}(y^3-x^4)y}{x^{10}}, \frac{h_{2}(y^3-x^4)y^2}{x^{10}}
+\right\rangle_{K[x]}.
+\]
+}
+
+The normalization of the local ring is $A^{(1)} + A^{(2)}$.
+\end{example}
+
+% \begin{example}
+% \label{exampleTwoBranchesA-locloc} 
+% \todo{TWOBRANCHES modify this example using the new example with no inclusion}
+% Let $f = (Y^{3}-X^{7})(Y^{2} - X^{3})+Y^{6}
+% \in{\mathbb{Q}}[X,Y]$, from Example \ref{exampleTwoBranchesA}, and $A = K[X,Y]
+% / \langle f \rangle$. Ignoring the expansions of $f$ that do not vanish at the
+% origin, the expansions of $f$ are $\gamma_{1,2,3} = \xi_{1,2,3}X^{7/3} +
+% \dots$ and $\gamma_{4,5} = \pm X^{3/2} + \dots$, where $\xi_{i}$, $i=1,2,3$,
+% are the roots of $X^{3} - 1 = 0$.
+% 
+% As we have seen in Example \ref{exampleTwoBranchesA-int}, the maximal
+% integrality exponent is $e = 7$.
+% 
+% We have two conjugacy classes, $\varGamma_{1} = \{\gamma_{1}, \gamma_{2},
+% \gamma_{3}\}$ and $\varGamma_{2} = \{\gamma_{4}, \gamma_{5}\}$, so we compute
+% two local rings.
+% 
+% For $i = 1$, the development of $(Y - \gamma_{4})(Y-\gamma_{5})$ up to order
+% $7$, is $h_{1} = Y^{2} + X^{3}Y+ 2X^{6}Y -X^{3} - X^{6}$ (we ommit the details
+% of this computation which can be done using Hensel's lemma). Since $n - s_{1}
+% - 1 = 5 - 3 - 1 = 1$, the first elements of the integral basis are $b_{0} =
+% 1$, $b_{1} = y / x$. For $c = 0, 1, 2$, the truncated factors corresponding to
+% $\varGamma_{1}$ are $1, Y, Y^{2}$. Therefore, the numerators of the generators
+% of $A^{(1)}$ are $1, y, h_{1}, h_{1} \cdot y, h_{1} \cdot y^{2}$. Computing
+% the integrality exponents, we get the integral basis $A^{(1)} = \langle1,
+% \frac{y}{x}, \frac{h_{1}}{x^{3}}, \frac{h_{1}\cdot y}{x^{5}}, \frac{h_{1}
+% \cdot y^{2}}{x^{7}}\rangle_{K[x]}$.
+% 
+% Similarly, for $i = 2$, the development of $(Y - \gamma_{1})(Y - \gamma_{2})(Y
+% - \gamma_{3})$ is $h_{2} = Y^{3}$. Now $n - s_{2} - 1 = 5 - 2 - 1 = 2$ and the
+% first elements of the integral basis are $b_{0} = 1$, $b_{1} = y/x$, $b_{2} =
+% y^{2}/x^{3}$. For $c = 0, 1$, the truncated factors corresponding to
+% $\varGamma_{2}$ are $1, Y$. Therefore, $A^{(2)} = \langle1, \frac{y}{x},
+% \frac{y^{2}}{x^{3}}, \frac{h_{2}}{x^{4}}, \frac{h_{2}\cdot y}{x^{6}}%
+% \rangle_{K[x]}$.
+% 
+% The normalization of the local ring is $A^{(1)} + A^{(2)}$. In this case,
+% $A^{(2)} \subseteq A^{(1)}$ and hence the local integral basis of $A$ is
+% $\left\langle 1, \frac{y}{x}, \frac{h_{1}}{x^{3}}, \frac{h_{1}y}{x^{5}},
+% \frac{h_{1}y^{2}}{x^{7}}\right\rangle _{K[x]}$.
+% \end{example}
+
+%\begin{remark}
+%For simple examples, the inclusion of local contributions (such as $A^{(2)}
+%\subseteq A^{(1)}$ in the last example) usually holds. However, for more
+%complicated examples, this might not happen. For example, if $f = (y^{2}%
+%-x^{3})(y^{2}-x^{5})(y^{2}-x^{7}) + y^{7}$, the local contribution
+%corresponding to the second and third factors are not included one in the
+%other, and are both needed for computing the local integral basis. (We omit
+%the details of the output, which is too large to display.)
+%\end{remark}
+
+We finish this section with a special algorithm for the case of simple singularities.
+
+\begin{lemma}
+Let $f\in K[[x]][y]$ be an irreducible Weierstra\ss \ polynomial with respect
+to $y$ and $\deg_{y}f=n$. Let $y(x)$ be a Puiseux expansion, and
+$y(x)=\sum_{i\geq m}a_{i}x^{\frac{i}{n}}$, $a_{m}\neq0$, $m>n$ and
+$\gcd(m,n)<n$. Let $k_{0}=n$, $k_{1}=m$, $k_{2},\ldots,k_{g}$ be the
+characteristic exponents and let $\varepsilon$ be a primitive root of unity.
+The following holds (cf. \cite[Lemma 5.2.18(1)]{JP} and the proof thereof):
+
+\begin{enumerate}
+\item $f=%
+%TCIMACRO{\dprod \limits_{i=1}^{n}}%
+%BeginExpansion
+{\displaystyle\prod\limits_{i=1}^{n}}
+%EndExpansion
+(y-y(\varepsilon^{i}x))$
+
+\item For $j=1,\ldots,g$ denote by $N_{j}$ the set of all $i\in\{1,\ldots,n\}$
+such that%
+\[
+\frac{k_{0}}{\gcd(k_{0},\ldots,k_{j-1})}\mid i\text{ and }\frac{k_{0}}%
+{\gcd(k_{0},\ldots,k_{j})}\not \mid i\text{.}%
+\]
+Then%
+\[
+\operatorname{ord}_{x}(y(x)-y(\varepsilon^{i}x))=\frac{k_{j}}{n}%
+\]
+for all $i\in N_{j}$. In particular, if $g=1$ then%
+\[
+\operatorname{ord}_{x}(y(x)-y(\varepsilon^{i}x))=\frac{k_{1}}{n}%
+\]
+if $i$ is not a multiple of $n$.
+
+\item We have%
+\begin{align*}
+\operatorname{ord}_{x}\frac{\partial f}{\partial y}(x,y(x)) &  =\sum_{j=1}%
+^{g}\left(  \gcd(k_{0},\ldots,k_{j-1})-\gcd(k_{0},\ldots,k_{j})\right)
+\frac{k_{j}}{n}\\
+&  =\operatorname*{Int}\nolimits_{\{1,\ldots,\hat{\imath},\ldots,n\}}%
+\end{align*}
+for all $i$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proposition}
+\label{prop integral}
+With notation as above
+\begin{enumerate}
+\item For $e=\left\lfloor \operatorname{ord}_{x}\frac{\partial f}{\partial
+y}(x,y(x))\right\rfloor $ the element $\frac{\frac{\partial f}{\partial y}%
+}{x^{e}}$ is integral over $K[[x]]$ and $e$ is maximal.
+
+\item Let%
+\[
+e=\left\lfloor \operatorname{ord}_{x}\frac{\partial^{n-1}f}{\partial y^{n-1}%
+}(x,y(x))\right\rfloor
+\]
+Then $\frac{\frac{\partial^{n-1}f}{\partial y^{n-1}}}{x^{e}}$ is integral over
+$K[[x]]$, $e=\left\lfloor \frac{k_{1}}{n}\right\rfloor $ and $e$ is maximal.
+
+\item If $g=1$ then
+\[
+1,\frac{\frac{\partial^{n-1}f}{\partial y^{n-1}}}{x^{e_{1}}},\ldots
+,\frac{\frac{\partial f}{\partial y}}{x^{e_{n-1}}}%
+\]
+with
+\[
+e_{i}=\left\lfloor \operatorname{ord}_{x}\frac{\partial^{n-i}f}{\partial
+y^{n-i}}(x,y(x))\right\rfloor
+\]
+form an integral basis of $\overline{K[[x,y]]/\left(  f\right)  }$ over
+$K[[x]]$.
+\end{enumerate}
+\end{proposition}
+
+\begin{remark}
+If $f=y^{4}-2x^{3}y^{2}-4x^{11}y+x^{6}-x^{19}$ then $y(x)=x^{\frac{6}{4}%
+}+x^{\frac{19}{4}}$ is a Puiseux expansion, $g=2$ and $(3)$ in Proposition
+\ref{prop integral} does not hold.
+\end{remark}
+
+We now prove Proposition \ref{prop integral}.
+
+\begin{proof}
+Choose $\Omega\subseteq\{1,\ldots,n\}$ with $\left\vert \Omega\right\vert =d$
+and $\operatorname*{Int}_{\Omega}$ maximal. Then%
+\[
+\bar{p}:=%
+%TCIMACRO{\dprod \limits_{j\in\Omega}}%
+%BeginExpansion
+{\displaystyle\prod\limits_{j\in\Omega}}
+%EndExpansion
+\left(  y-y(\varepsilon^{j}x)\right)
+\]
+is a polynomial of degree $d$ with respect to $y$ and $\operatorname{ord}%
+_{x}\bar{p}(x,y(x))$ is maximal. Let%
+\[
+e=\left\lfloor \operatorname{ord}_{x}\bar{p}(x,y(x))\right\rfloor \text{.}%
+\]
+
+By Lemma \ref{lemma int bas shape}, for some approximation $p$ of $\bar{p}$, we
+can choose $\frac{p(x,y)}{x^{e}}$ as the degree $d$ element in the integral basis.
+
+We obtain $(1)$ for $d=n-1$ and $(2)$ for $d=1$, and $\operatorname*{Int}%
+_{\Omega}$ is independent of $\Omega$. The same holds true for $(3)$ in case
+$g=1$.
+
+To see $(4)$ we compute $\left\lfloor \operatorname{ord}_{x}\frac{\partial
+^{2}f}{\partial y^{2}}(x,y(x))\right\rfloor =4$. However,
+\[
+\bar{p}=\left(  y-y(-x)\right)  \left(  y-y(ix)\right)
+\]
+gives $\left\lfloor \operatorname{ord}_{x}\bar{p}(x,y(x))\right\rfloor =6$.
+\end{proof}
+
+\subsection{Computation of the local contribution to the integral basis}
+
+For computing the local contribution to the integral basis at the origin, we
+have to multiply the numerators of the local integral basis at the origin by
+the factor corresponding to the expansions that do not vanish at the origin.
+As noted in the sketch of the algorithm at the beginning of this section, for
+the terms of degree smaller than the degree of that factor, the integrality
+exponent will be $0$.
+
+Combining the results of the previous sections we obtain Algorithm
+\ref{alg:HenselBasis}.
+
+%Using the results of the previous sections we now give the algorithm for
+%computing a local contribution to the integral basis at the origin. We can
+%apply any of the two local integral basis algorithms from the last section. We
+%first give a short summary.
+
+
+%Let $f\in K[X,Y]$ be a polynomial of degree $n$ in $Y$ with an isolated
+%singularity at the origin. We first use the Newton-Puiseux method to compute
+%just the singular parts of the Puiseux expansions $\gamma_{1},...,\gamma_{s}$,
+%as described in Section \ref{sect:basic-Puiseux}.
+
+
+%As explained in Section \ref{sect:max-expo}, we use the singular parts of the
+%Puiseux expansions to find the expansion $\gamma_{j}$ which when discarded
+%leads to the maximal integrality exponent $e$.
+
+
+%We apply Algorithm \ref{alg:BlockSplitting} (which in turns uses Algorithm
+%\ref{alg:SegmentSplitting} to split into Puiseux segments) to approximate up
+%to order $e$ a splitting of $f$ into Puiseux blocks. Here we use Hensel
+%lifting (Algorithm \ref{alg:Hensel}), in particular to obtain the factor not
+%vanishing at the origin.
+
+
+%In order to discard $\gamma_{j}$ from the approximation and still have a
+%result $p$ over the ground field, we truncate the expansions of the splitting
+%factors using Algorithm \ref{alg:Truncate}. We obtain the highest degree
+%element of the integral basis as $\frac{p}{x^{e}}$.
+
+
+%Now we use all the factors to build the remaining elements of the integral
+%basis. For each degree $d$, $0 \leq d \leq n-2$, we determine how many
+%expansions of each Pusieux block we have to keep, as explained in
+%\ref{section:lowdegree} and we modify the corresponding factors using
+%Algorithm \ref{alg:TruncateGeneral}. The numerator of the integral element is
+%the product of all the modified factors, and the denominator is $x^{e(d)}$
+%where $e(d)$ is the integrality exponent of the numerator.
+
+
+%These considerations lead us to Algorithm \ref{alg:HenselBasis}.
+
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Local contribution to the integral basis}          % give the algorithm a caption
+\label{alg:HenselBasis}
+\begin{algorithmic}[1]
+\REQUIRE $f \in K[X,Y]$ irreducible polynomial, monic of $Y$--degree $n$, with only one singularity, located at the origin.
+\ENSURE $b_0, \dots, b_{n-1}$, an integral basis of $K[X, Y] / \langle f \rangle$.
+\STATE Compute $\varGamma = \{\bar\gamma_1, \dots, \bar\gamma_s\}$, the singular part of the Puiseux expansions $\{\gamma_1, \dots, \gamma_s\}$ of $f$ that vanish at $Y = 0$
+\STATE Compute $e = E(f)$ as indicated in Section \ref{subsection:maxexp}
+\STATE $\{h, f_1, \dots, f_r\} = \Splitting(f, e)$, where $f_i$, $i = 1, \dots, r$ are the factors corresponding to the conjugacy classes of expansions of $f$ that vanish at the origin and $h$ is the factor of the expansions that vanish outside, both developed up to degree $e$
+\STATE From $\varGamma$ and $\{f_1, \dots, f_r\}$, set $L = \{L_1, \dots, L_s\}$, where $L_i = \{(\varGamma_{(i,1)}, f_{\varGamma_{(i,1)}}),
+\dots, (\varGamma_{(i, u_i)}, f_{\varGamma_{(i, u_i)}})\}$,
+the singular parts of the conjugacy classes of the $i$-th Puiseux block of $f$ and the corresponding factors
+\STATE $m = n - \deg(h)$
+\STATE $\{(p_0, o_0), \dots, (p_m, o_m)\} = \LocalIntegralBasis(L)$
+\FOR{$i = 0, \dots, \deg(h)-1$}
+\STATE $b_i = y^i$
+\ENDFOR
+\FOR{$i = 0, \dots, m-1$}
+\STATE $b_{\deg(h) + i} = h \cdot p_i / x^{\lfloor o(i) \rfloor}$
+\ENDFOR
+\RETURN $\{b_0, \dots, b_{n-1}\}$.
+\end{algorithmic}
+\end{algorithm}
+
+
+In order to obtain a (global) integral basis of $\overline{A}$ over $K[x]$ we
+can now use Proposition \ref{prop:local-to-global}.
+
+\begin{remark}
+In the presence of conjugated singularities, to get a better perfomance, our
+local algorithm can handle groups of conjugate singularities simultaneously,
+in a similar way as in \cite[Section 4]{vanHoeij94}. If $I \subset k[X,Y]$ is
+an associated prime of the singular locus, corresponding to a group of
+conjugate singularities, we apply a linear coordinate change if necessary, so
+that no two of these singularities have the same $X$-coordinate. Then we can
+find polynomials $q_{1}, q_{2} \in K[X]$ such that $I = \langle q_{1}(X),
+Y-q_{2}(X)\rangle$. We take $\alpha$ a root of $q_{1}(X)$ and traslate the
+singularity $(\alpha, q_{2}(\alpha))$ to the origin. We compute the local
+contribution to integral basis at the origin and apply the inverse traslation
+to the output. The common denominator of the resulting generators will be a
+power of $x - \alpha$. We replace $(x-\alpha)$ by $q_{1}(x)$ in the
+denominators and we eliminate $\alpha$ from the numerators by considering
+$\alpha$ as a new variable and reducing each numerator by the numerators of
+smaller degree (written all with the same common denominator), using an
+elimination ordering $\alpha\gg y \gg x$. Since an integral basis over the
+original ring always exists, the elimination process is garanteed to
+eliminiate $\alpha$ from the numerators.
+\end{remark}
+
+\begin{example}
+Let $A = k[X, Y]$ and $f(X, Y) = Y^{3} - (X^{2}-2)^{2}$. The singular locus
+contains only one primary component $\langle X^{2} - 2, Y^{2} \rangle$, with
+radical $\langle X^{2} - 2, Y\rangle$. It consists of the two conjugated
+points $(-\sqrt{2}, 0)$ and $(\sqrt{2}, 0)$. We take $\alpha= \sqrt{2}$ and
+compute the local contribution at $(\alpha, 0)$ translating that point to the
+origin. After after the inverse translation, we get the integral basis of the
+local contribution
+\[
+\left\{  1, y, \frac{y^{2}}{x-\alpha}\right\}  .
+\]
+
+
+The local contribution to the integral basis at the conjugated singularity is
+$\left\{  1, y, \frac{y^{2}}{x+\alpha}\right\}  $. Hence the global integral
+basis is $\left\{  1, y, \frac{y^{2}}{x^{2}-2}\right\}  $. (In this simple
+case, we did not need to eliminate $\alpha$ from the denominator.)
+\end{example}
+
+\begin{example}
+Let $A = k[X, Y]$ and $f(X, Y) = (Y-X)^{3} - (X^{2}-2)^{2}$. Now the radical
+of singular locus is the prime ideal $\langle X^{2} - 2, Y-X \rangle$. It
+consists of the two conjugated points $(-\sqrt{2}, -\sqrt{2})$ and $(\sqrt{2},
+\sqrt{2})$. We take $\alpha= \sqrt{2}$ and compute the local contribution at
+$(\alpha, \alpha)$. We get the integral basis of the local contribution
+\[
+\left\{  1, y, \frac{y^{2} - 2\alpha y + 2}{x-\alpha}\right\}  .
+\]
+
+
+To eliminate $\alpha$ from the last numerator, we write all the fractions with
+the same denominator $\left\{  \frac{x-\alpha}{x-\alpha}, \frac{y(x-\alpha
+)}{x-\alpha}, \frac{y^{2} - 2\alpha y + 2}{x-\alpha}\right\}  $, and we can
+now reduce the last one to get $\left\{  1, y, \frac{y^{2} - 2x y +
+2}{x-\alpha}\right\}  $. Hence the global integral basis is $\left\{  1, y,
+\frac{y^{2} - 2x y + 2}{x^{2}-2}\right\}  $.
+\end{example}
+
+\subsection{Appendix: Direct approach}
+
+\label{section:directApproach}
+
+\todo{Is this what is implemented? I am a bit puzzled with respect to the
+following text: On the first 24 pages we talk about how fast our new approach is,
+and now we say that it is slow. What is the truth?}
+
+The local approach of Algorithm \ref{alg:loclocbasis} can be computationally
+slow, since summing up the local results and computing the integral basis from
+that requires the computation of Groebner bases of possibly complicated ideals.
+
+We present a direct approach that computes the integral basis at the origin
+handling all the different conjugacy classes together, without computing
+Groebner bases, and which is therefore usually faster.
+
+However, since the details are very technical, we only give a sketch of the
+algorithms for this approach.
+
+The main result for constructing $p$ is given in the following theorem, which
+generalizes the results in \cite{vanHoeij94}.
+
+\begin{theorem}
+\label{thm:truncation} Let $f \in K[X,Y]$ and $\tilde p \in{\mathcal{P}_{X}%
+}[Y]$ of $Y$--degree $d$ with maximal valuation at $f$. Then there exists $p
+\in K[X,Y]$ of $Y$--degree $d$ such that $v_{f}(\tilde p) = v_{f}(p)$ and such
+that the Puiseux expansions of $p$ are all truncations of expansions of $f$.
+\end{theorem}
+
+\begin{proof}
+In \cite{vanHoeij94} it is proved that there exists $q \in K[X,Y]$ of
+$Y$--degree $d$ such that $v_{f}(\tilde p) = v_{f}(q)$. To construct $p$ we
+truncate the expansions appearing in $q$, removing all the terms that do not
+coincide with the initial parts of Puiseux expansions of $f$. By doing this,
+the valuation does not decrease, $v_{f}(p) = v_{f}(q) = v_{f}(\tilde p)$, and
+$p \in K[X,Y]$.
+\end{proof}
+
+For the algorithm, instead of starting with $\tilde p$ and then building $p$
+from it in such a way that the valuation at $f$ does not decrease, we will
+directly build a polynomial $p$ of maximal valuation among all polynomials
+coming from truncating expansions of $f$.
+
+What is more important, by Proposition \ref{prop semilocal}\todo{adjust}, the choice and
+truncation of a given number of expansions in a conjugacy class can be done
+independently of the choice and truncation of expansions in other classes.
+
+\begin{lemma}
+\label{lemma:indep} Let $f \in K[X,Y]$ and $v$ the maximal valuation at $f$
+among all polynomials in $K[X,Y]$ of $Y$--degree $d$. Let $\varGamma_{1},
+\dots, \varGamma_{r}$ be the conjugacy classes of expansions of $f$. There
+exist $q_{1}, \dots, q_{r} \in K[X,Y]$ such that $p = q_{1} \cdots q_{r}$ has
+$Y$--degree $d$, $v_{f}(p) = v$ and $q_{i}$ has maximal valuation at $f_{i} =
+\prod_{\gamma\in\Gamma_{i}} (Y - \gamma)$, $1 \leq i \leq r$, among all the
+polynomials of the same $Y$--degree as $q_{i}$.
+\end{lemma}
+
+\begin{proof}
+This is a direct corollary of Proposition \ref{prop semilocal}\todo{adjust}.
+\end{proof}
+
+\begin{comment}
+\begin{proof}
+For a given $d \in{\mathbb{N}}$, let $\tilde p \in \Px[Y]$ and $p
+\in K[X,Y]$ be as in Theorem \ref{thm:truncation}. That is $v_{f}(p) =
+v_{f}(\tilde p)$ and $p$ is obtained from $\tilde p$ by truncating its Puiseux
+expansions. If different choices of expansions in $\varGamma$ give the maximum
+valuation, for each possibility we define $w = (c_{1}, \dots, c_{r})$, $c_{i}$
+the number of expansions in $\varGamma_{i}$ and take $\tilde p$ with largest
+$w$ under the lexicographical ordering.
+Let $N$ be the expansions appearing in $\tilde p$ and for a given $j$ ($1 \leq
+j \leq r$) let $N_{j} = N \cap\varGamma_{j}$. Let $\tilde p_{j} = \prod
+_{\eta\in N_{j}} (Y - \eta)$ and $p_{j}$ the minimum truncation of the
+expansions in $\tilde p_{j}$ to get an element in $K[X,Y]$.
+We first show that $p = p_{1} \dots p_{r}$ (that is, the truncation in each
+class can be done independently from the truncation in other classes). If
+$N_{1} \neq\emptyset$, take $\eta_{1} \in N_{1}$. We want to prove that the
+truncation of $\eta_{1}$ to build $p$ (which we note $t(\eta_{1})$) is the
+same as the truncation of $\eta_{1}$ to build $p_{1}$ (which we note
+$t_{1}(\eta_{1})$).
+If not, this means that there exists $\eta_{2}$ in some $N_{i}$, $i > 1$, such
+that $t(\eta_{1})$ and $t(\eta_{2})$ are conjugate elements in the extension
+$K[X] \hookrightarrow \Px$ and such that no expansion in $N_{1}$
+is truncated to $t(\eta_{2})$. (Note that since $p$ is over the ground field,
+all the conjugates of $t(\eta_{1})$ must also be expansions of $p$.)
+Let $G = G(K[X] \hookrightarrow \Px)$ be the Galois group of the
+extension, and let $g \in G$ be such that $g(t(\eta_{1})) = t(\eta_{2})$. Then
+$g(\eta_{1}) \in\Gamma_{1}$ but is not in $N_{1}$. But then, to build $\tilde
+p$, we could have taken $g(\eta_{1})$ instead of $\eta_{2}$ and $v_{f}(\tilde
+p)$ would remain equal (if for $t(\eta_{1})$ the best continuation is
+$\eta_{1}$, then for $g(t(\eta_{1}))$ the best continuation must be
+$g(\eta_{1})$. This contradicts the fact that, because of the lexicographical
+ordering used, we were taking the largest possible number of expansions in
+$\Gamma_{1}$.
+Therefore, all the conjugates of $t(\eta_{1})$ come from truncating expansions
+in $N_{1}$. Now, proceeding inductively, we prove that the truncation of any
+expansion can be done inside each conjugacy class $\Gamma_{i}$, independently
+of the expansions chosen in other conjugacy classes.
+\end{proof}
+\end{comment}
+
+
+We can therefore compute the polynomials of each degree restricting to
+products of polynomials $q_{i}$ which only depend on the number of expansions
+chosen in each conjugacy class, and therefore we only have to decide optimally
+how many expansions to choose in each conjugacy class. We explain this in more detail.
+
+Let $n_{i}$, $1 \leq i \leq r$, be the number of expansions in the $i$-th
+conjugacy class. We define $p_{i}(c) = \TruncatedFactorGeneral(\varGamma_{i},
+c)$ for $0 \leq c < n_{i}$ and $p_{i}(n_{i}) = f_{i}$ developed up to degree
+$e$ in $X$ (which can be done by Algorithm \ref{alg:Splitting}). We call
+$N_{i}(c)$ the Puiseux expansions appearing in $p_{i}(c)$.
+
+Next, we consider the set of tuples $T_{d}=\{(c_{1},\dots,c_{r}),c_{i}%
+\in{\mathbb{N}}_{0},0\leq c_{i}\leq n_{i},c_{1}+\dots+c_{r}=d\}$. For
+$w=(c_{1},\dots,c_{r})\in T_{d}$, the polynomial of maximal valuation at $f$
+containing $c_{i}$ expansions in the $i$-th conjugacy class is $p_{w}%
+=p_{1}(c_{1})\cdots p_{r}(c_{r})$. The valuation of $p_{w}$ at $f$ can be
+computed by the formula
+\[
+v_{f}(p_{w})=\min_{1 \leq i \leq r}\left\{  o(\varGamma_{i},c_{i})+\sum_{j\neq
+i}v_{\gamma_{(i,1)}}(p_{j}(c_{j}))\right\}  .
+\]
+
+
+We look for the vector $w = (c_{1}, \dots, c_{r})$ for which $v_{f}(p_{w})$ is
+maximal, and for such $w$ we set $p_{d} := p_{w}$. The numerator of the
+element of degree $d$ in the integral basis is $p_{d}$ and the denominator is
+$x^{\lfloor v_{f}(p_{d}) \rfloor}$.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Integral element}          % give the algorithm a caption
+\label{alg:integralElementBasic}
+\begin{algorithmic}[1]
+\REQUIRE $(\varGamma_1, f_1), \dots, (\varGamma_r, f_r)$,
+the singular parts of the conjugacy classes of expansions that vanish at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$ and their corresponding factors developed up to $X$--degree $E(f)$;
+$d \in \N_0$, $0 \leq d \leq m = \deg_Y(f_1 \cdots f_r)$.
+\ENSURE $(p, o)$, with $p \in K[X,Y]$ of $Y$--degree $d$ of
+maximal valuation at $f$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $f$.
+\STATE $m_i = \#\varGamma_i$ for $i = 1, \dots, r$
+\STATE $T = \{(c_1, \dots, c_r)\}_{c_i \in \N_0 \mbox{, } 0 \leq c_i \leq m_i \mbox{, } c_1 + \dots + c_r = d}$
+\FORALL {$w = (c_1, \dots, c_r) \in T$}
+\FOR {$i = 1, \dots, r$}
+\IF{$0 \leq c_i < m_i$}
+\STATE $p_i(c_i) = \TruncatedFactorGeneral(\varGamma_{i}, c_i)$
+\ELSE
+\STATE $p_{i}(c_{i}) = f_i$
+\ENDIF
+\ENDFOR
+\STATE $p_{w} = p_{1}(c_{1})\cdots p_{r}(c_{r})$
+\STATE $v_{g}(p_{w})=\min_{1 \leq i \leq r}\left\{  o(\varGamma_{i},c_{i})+\sum_{j\neq
+i}v_{\gamma_{i}}(p_{j}(c_{j}))\right\}$, where $\gamma_{i}$ is any expansion of $\varGamma_i$.
+\ENDFOR
+\STATE $p = p_w$ for $w$ such that $v_{g}(p_{w})$ is maximal
+\RETURN $(p, v_{g}(p))$.
+\end{algorithmic}
+\end{algorithm}
+
+
+To apply the algorithm as described above, we must run over all the elements
+of $T_{d}$ and compute the corresponding valuations. This can still be slow
+when $T_{d}$ is large.
+
+We explain how to find the optimal $(c_{1}, \dots, c_{r}) \in T_{d}$ in an
+efficient way. Instead of considering tuples of $r$ elements, we will always
+consider tuples of $2$ elements and proceed iteratively.
+
+For each Puiseux block $\varPi_{i}$, $1 \leq i \leq a$, we define
+\[
+L_{i} = \{(\varGamma_{(i,1)}, f_{\varGamma_{(i,1)}}), \dots, (\varGamma_{(i,
+r_{i})}, f_{\varGamma_{(i, r_{i})}})\},
+\]
+where $\varGamma_{(i, j)}$ are the singular parts of the $j$-th conjugacy
+classes of the $i$-th block and $f_{\varGamma_{(i, j)}}$ is the corresponding
+factor of $f$ developed up to $X$--degree in $e$.
+
+For a list $L$ of this kind, we define $f_{L} = \prod_{(\Gamma, f_{\varGamma})
+\in L} f_{\varGamma}$ and we show how to compute $p_{L}(c)$, the polynomial in
+$K[X,Y]$ of $Y$--degree $c$ of maximal valuation at $f_{L}$, $0 \leq c \leq
+m$, where $m$ is the degree of $f_{L}$. For a Puiseux series $\gamma$, the
+notation $\gamma\in L$ will mean that there exists $(\Gamma, f_{\Gamma}) \in
+L$ such that $\gamma\in\Gamma$.
+
+We group the lists in new lists $\varLambda_{1}, \dots, \varLambda_{u}$ such
+that all the expansions in the same list $\varLambda_{i}$ have the same
+initial term (or conjugate initial terms). We order them in increasing order
+by the initial exponent. (The order among groups with the same initial
+exponent is not important.) Since $v(\gamma_{i})$ is the same for any
+$\gamma_{i} \in\varLambda_{i}$, we define $v(i) = v(\gamma_{i})$. The key
+property is that if $1 \leq i < j \leq u$, then $v(\gamma_{i} - \gamma_{j}) =
+v(i)$ for any $\gamma_{i} \in\varLambda_{i}$ and $\gamma_{j} \in
+\varLambda_{j}$.
+
+Let $m_{i}$ be the number of expansions in $\varLambda_{i}$, $1 \leq i \leq
+u$. We define $\varTheta_{i} = \varLambda_{i} + \dots+ \varLambda_{u}$ and we
+want to compute inductively $p_{\varTheta_{i}}(c)$, for $0 \leq c \leq m_{i} +
+\dots+ m_{u}$.
+
+We start by computing $p_{\varTheta_{u}}(c) = p_{\varLambda_{u}}(c)$ for $0
+\leq c \leq m_{u}$. For any $1 \leq i \leq u$ and $1 \leq c \leq m_{u}$ we can
+compute $p_{\varLambda_{i}}(c)$ using Algorithm \ref{alg:integralElementBasic}%
+, or applying this new algorithm recursively as we will see below.
+
+Now, proceeding inductively, once we have computed $p_{\varTheta{i+1}}(c)$ for
+all $0 \leq c \leq m_{i+1} + \dots+ m_{u}$, we want to compute
+$p_{\varTheta_{i}}(c)$ for all $0 \leq c \leq m_{i} + \dots+ m_{u}$.
+
+The property mentioned above implies that $v(\gamma_{i} - \gamma_{i+1}) =
+v(i)$ for any $\gamma_{i} \in\varLambda_{i}$ and $\gamma_{i+1} \in
+\varTheta_{i+1}$.
+
+Hence for any set $N_{1}$ of $c_{1}$ expansions of $\varLambda_{i}$ and any
+set $N_{2}$ of $c_{2}$ expansions of $\varTheta_{i+1}$, if $q_{1} =
+\prod_{\eta\in N_{1}}(Y - \eta)$, $q_{2} = \prod_{\eta\in N_{2}}(Y - \eta)$
+and $q = q_{1}q_{2}$, then
+\[
+v_{\gamma_{i}}(q_{2}) = c_{2} v(i)
+\]
+
+
+Since $v_{f_{\varLambda_{i}}}(q_{1})$ is the minimum of $v_{\gamma_{i}}%
+(q_{1})$ for $\gamma_{i} \in\varLambda_{i}$, we obtain that
+\[
+\min_{\gamma\in\varLambda_{i}} v_{\gamma}(q) = v_{f_{\varLambda_{i}}}(q_{1}) +
+c_{2} v(i)
+\]
+
+
+Similarly,
+\[
+\min_{\gamma\in\varTheta_{i+1}} v_{\gamma}(q) = c_{1} v(i) +
+v_{f_{\varTheta_{i+1}}}(q_{2})
+\]
+
+
+We conclude that
+\[
+v_{f_{\varTheta_{i}}}(q) = \min\{v_{f_{\varLambda_{i}}}(q_{1}) + c_{2} v(i),
+c_{1} v(i) + v_{f_{\varTheta_{i+1}}}(q_{2})\}
+\]
+
+
+This allows us to compute inductively
+\[
+o(\varTheta_{i}, c) = \max_{c_{1} + c_{2} = c} v_{f_{\varTheta_{i}}%
+}(p_{\varLambda_{i}}(c_{1})p_{\varTheta_{i+1}}(c_{2}))
+\]
+and define $p_{\varTheta_{i}}(c)$ as the polynomial for which the maximum is obtained.
+
+The numerator of the element of degree $d$ in the integral basis is
+\[
+p_{d} = p_{\varTheta_{1}}(d)
+\]
+and the denominator is $x^{\lfloor v_{f}(p_{d}) \rfloor}$.
+
+For computing the best polynomials in each block, we can use this strategy
+recursively. We summarize the method in Algorithm \ref{alg:directApproach}.
+
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Local integral basis, combinatorial approach}          % give the algorithm a caption
+\label{alg:directApproach}
+\begin{algorithmic}[1]
+\REQUIRE $L = \{L_1, \dots, L_r\}$, where $L_i = \{(\varGamma_{(i,1)}, f_{\varGamma_{(i,1)}}),
+\dots, (\varGamma_{(i, u_i)}, f_{\varGamma_{(i, u_i)}})\}$, $1 \leq i \leq r$, are
+the singular parts of the conjugacy classes of some Puiseux blocks of $f$ and their corresponding factors developed
+up to $X$--degree $e$.
+\ENSURE $\{(p_0, o_0), \dots, (p_{m}, o_{m})\}$ such that $p_i \in K[X,Y]$ ($0 \leq i \leq m$) has $Y$--degree $i$ and
+maximal valuation at $g = f_{\varGamma_{(1,1)}}\cdots f_{\varGamma_{(r,u_r)}}$; and $o_i \in \Q_{\geq 0}$, $o_i = v_g(p_i) $, where $m = \deg_Y(g)$.
+\IF{$r = 1$}
+\RETURN $\{\IntegralElement(L_1, c)\}_{c= 0, \dots, m}$
+\ELSE
+\STATE $f_{L_i} = \prod_{j = 1}^{u_i} f_{\varGamma_{(i, j)}}$, for $i = 1, \dots, r$.
+\STATE Group the lists $L_1, \dots, L_r$ in lists $\varLambda_1, \dots, \varLambda_u$
+such that all the expansions in the same
+list $\varLambda_{i}$ have the same or conjugate initial terms
+(without considering the common rational part of all expansions, if any),
+ordered by the initial exponent in increasing order
+\STATE $f_{\varLambda_i} = \prod_{L_j \in \varLambda_i} f_{L_j}$ and $m_i = \deg(f_{\varLambda_i})$, for $i = 1, \dots, u$
+\STATE $\varTheta_u = \varLambda_u$, $f_{\varTheta_u} = f_{\varLambda_u}$
+\STATE $\{(p_{\varTheta_u}(c), o(\varTheta_u, c))\}_{c = 0, \dots, m_u} = \LocalIntegralBasis(\varTheta_u)$
+\FOR{$i = u-1, \dots, 1$}
+\STATE $\varTheta_i = \varLambda_i \cup \varTheta_{i+1}$, $f_{\varTheta_i} = f_{\varLambda_i} f_{\varTheta_{i+1}}$
+\STATE $\{(p_{\varLambda_i}(c), o(\varLambda_i, c))\}_{c = 0, \dots, m_i} = \LocalIntegralBasis(\varLambda_i)$
+\FOR{$0 \leq c \leq m_i + \dots + m_u$}
+\STATE $C = \{(c_1, c_2) \in \Z_{\leq 0}^2 \mid c_1 + c_2 = c\mbox{, }0 \leq c_1 \leq m_i\mbox{, }0 \leq c_2 \leq m_{i+1} + \dots + m_u\}$
+\STATE $o(\varTheta_{i}, c) = \max_{(c_1, c_2) \in C} v_{f_{\varTheta_{i}}%
+}(p_{\varLambda_{i}}(c_{1})p_{\varTheta_{i+1}}(c_{2}))$
+\STATE $p_{\varTheta_i}(c) = $ the polynomial for which the maximum is obtained
+\ENDFOR
+\ENDFOR
+\RETURN $\{(p_{\varTheta_1}(c), o(\varTheta_1, c))\}_{c = 0, \dots, m}$.
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+We apply this algorithm to Example \ref{exampleTwoBranches}, to compare with
+Algorithm \ref{alg:loclocbasis}.
+
+\begin{example}
+\todo{TWOBRANCHES modify this example using the new example with no inclusion}
+Let $f = (Y^{3}-X^{7})(Y^{2} - X^{3})+Y^{6} \in{\mathbb{Q}}[X,Y]$. The input
+for Algorithm \ref{alg:directApproach} is $L = \{L_{1}, L_{2}\} =
+\{\{(\varGamma_{1}, f_{1})\}, \{(\varGamma_{2}, f_{2})\}\}$, where
+$\varGamma_{1}$ and $\varGamma_{2}$ are the same as in Example
+\ref{exampleTwoBranches-locloc} and $f_{1} = h_{2}$, $f_{2} = h_{1}$.
+
+We have $\Lambda_{1} = L_{1}$, $\Lambda_{2} = L_{2}$ and $u = 2$. Also
+$f_{\Lambda_{1}} = f_{1}$, $f_{\Lambda_{2}} = f_{2}$, $m_{1} = 3$ and $m_{2} =
+2$.
+
+Hence $\varTheta_{2} = \Lambda_{2}$, $f_{\varTheta_{2}} = f_{\Lambda_{2}}$ and
+the local integral basis corresponding to $\varTheta_{2}$ is $\{(1, 0), (y,
+1), (f_{2}, \infty)\}$.
+
+For $i = 1$, $\varTheta_{1} = L$ and $f_{\varTheta_{1}} = f_{1}f_{2}$. The
+local integral basis corresponding to $\varLambda_{1}$ is $\{(1, 0), (y, 2),
+(y^{2}, 4), (f_{1}, \infty)\}$.
+
+Now we have to choose the best combinations for each $c = 0, \dots, m$. For
+example, for $c = 3$, we try the pairs $(c_{1}, c_{2}) \in\{(1,2), (2,1), (3,
+0)\}$ and find that the best choice is $(c_{1}, c_{2}) = (1,2)$, for which
+$v_{f_{\vartheta_{1}}}(p_{\Lambda_{1}(2)}p_{\varTheta_{2}}(0)) =
+v_{f_{\vartheta_{1}}}(Y f_{2}) = 16/3$.
+
+Applying the formulas for all $c$, $0 \leq c \leq5$, we get the output
+\[
+\{(1, 0), (y, 1), (f_{2}, 3), (y f_{2}, 16/3), (y^{2} f_{2}, 23/3), (f_{1}
+f_{2}, \infty)\}.
+\]
+
+
+The first five elements define the integral basis $\left\langle 1, \frac{y}%
+{x}, \frac{f_{2}}{x^{3}}, \frac{f_{2}y}{x^{5}}, \frac{f_{2}y^{2}}{x^{7}%
+}\right\rangle _{K[x]}$.
+\end{example}
+
+%\section{The nodal locus}
+%In this section, we explain how to compute the integral basis of the ideal localized at the nodal locus, without decomposing it into its singular points.
+
+
+\section{Timings}
+
+\label{sec timings}
+
+We present some timings which compare the implementation of our algorithm
+\todo{Which algorithm is meant?
+We also have the appendix.} in \textsc{Singular}{} with that of van Hoeij's
+algorithm in \textsc{Maple}. We compute integral bases for $A=\mathbb{Q}%
+[X,Y]/\langle f\rangle$ with polynomials $f$ as specified. All timings are in
+seconds, taken on an AMD Opteron $6174$ machine with $48$ cores, $2.2$GHz, and
+$128$GB of RAM running a Linux operating system. We do not make use of
+parallel computation so far; this is subject to ongoing implementation work.
+In the cases where $f$ has only one singular point, this point is given as
+part of the input to both algorithms. That is, no computation or decomposition
+of the singular locus is done. In the cases where the singular locus has more
+than one point, the timings are taken for decomposing the singular locus,
+computing the local contributions, and combining these.
+%In some tables, to quantify the influence of the primary decomposition, we give in addition to this (column
+%\emph{global}) also the timings for the local algorithm applied to a
+%singularity at $(X, Y)  = (0,0)$ in the column
+%\emph{origin}.
+We remark that for obtaining the integral bases, singularities at infinity of
+the curve $\{f=0\}$ do not matter.
+
+\todo{We should have more columns for the timings.
+1) Use the global normalization algorithm. 2) Use the local
+normalization algorithm. 2) Magma.}
+
+\subsection{\texorpdfstring{$A_{k}$}{Ak}-singularity}
+
+The plane curves with defining equation $f(X,Y)=Y^{2}+X^{k+1}+Y^{d}$, $k\geq
+1$, $d\geq3$ have exactly one singularity at the origin, which is of type
+$A_{k}$.
+
+%\begin{table}[h]
+%\caption{Timings for $A_{k}$ singularities}%
+%\label{table Ak}%
+%
+
+\[%
+\begin{tabular}
+[c]{ll|ll|}\hline
+\multicolumn{1}{|r}{$k$} & \multicolumn{1}{|r|}{$d$} &
+\multicolumn{1}{|l|}{\textsc{Singular}{}} &
+\multicolumn{1}{|l|}{\textsc{Maple}}\\\hline
+\multicolumn{1}{|r}{$5$} & \multicolumn{1}{|r|}{$10$} &
+\multicolumn{1}{|r}{$0$} & \multicolumn{1}{|r|}{$0$}\\
+\multicolumn{1}{|r}{$5$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r}{$0$} & \multicolumn{1}{|r|}{$2.4$}\\
+\multicolumn{1}{|r}{$5$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r}{$14$} & \multicolumn{1}{|r|}{$262$}\\
+\multicolumn{1}{|r}{$50$} & \multicolumn{1}{|r|}{$60$} &
+\multicolumn{1}{|r}{$0$} & \multicolumn{1}{|r|}{$2.6$}\\
+\multicolumn{1}{|r}{$50$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r}{$0$} & \multicolumn{1}{|r|}{$7$}\\
+\multicolumn{1}{|r}{$50$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r}{$16$} & \multicolumn{1}{|r|}{$385$}\\
+\multicolumn{1}{|r}{$90$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r}{$0$} & \multicolumn{1}{|r|}{$12$}\\
+\multicolumn{1}{|r}{$90$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r}{$13$} & \multicolumn{1}{|r|}{$509$}\\
+\multicolumn{1}{|r}{$400$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r}{$16$} & \multicolumn{1}{|r|}{$1689$}\\\hline
+\end{tabular}
+\ \
+\]
+%\end{table}
+
+
+\subsection{\texorpdfstring{$D_{k}$}{Dk}-singularity}
+
+The plane curves with defining equation $f(X,Y)=X(X^{k-1}+Y^{2})+Y^{d}$,
+$k\geq2$, $d\geq3$ have exactly one $D_{k}$-singularity at the origin.
+
+%\begin{table}[h]
+%\caption{Timings for $D_{k}$ singularities}%
+%\label{table Dk}%
+\[%
+\begin{tabular}
+[c]{|c|c|l|l|}\hline
+$k$ & \multicolumn{1}{|c|}{$d$} & \multicolumn{1}{|l|}{\textsc{Singular}} &
+\textsc{Maple}\\\hline
+\multicolumn{1}{|r|}{$5$} & \multicolumn{1}{|r|}{$10$} &
+\multicolumn{1}{|r|}{$0$} & \multicolumn{1}{|r|}{$0$}\\
+\multicolumn{1}{|r|}{$5$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$2.6$}\\
+\multicolumn{1}{|r|}{$5$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r|}{$51$} & \multicolumn{1}{|r|}{$206$}\\
+\multicolumn{1}{|r|}{$50$} & \multicolumn{1}{|r|}{$60$} &
+\multicolumn{1}{|r|}{$1$} & \multicolumn{1}{|r|}{$14$}\\
+\multicolumn{1}{|r|}{$50$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$45$}\\
+\multicolumn{1}{|r|}{$50$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r|}{$49$} & \multicolumn{1}{|r|}{$2114$}\\
+\multicolumn{1}{|r|}{$90$} & \multicolumn{1}{|r|}{$100$} &
+\multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$142$}\\
+\multicolumn{1}{|r|}{$90$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r|}{$50$} & \multicolumn{1}{|r|}{$5918$}\\
+\multicolumn{1}{|r|}{$400$} & \multicolumn{1}{|r|}{$500$} &
+\multicolumn{1}{|r|}{$50$} & \multicolumn{1}{|r|}{$>6000$}\\\hline
+\end{tabular}
+\
+\]
+%\end{table}
+
+
+\subsection{Ordinary multiple points}
+
+We consider random curves of degree $d$ with an ordinary $k$-fold point at the
+origin. The defining polynomials were generated by the function
+\texttt{polyDK} from the \textsc{Singular}{} library
+\texttt{integralbasis.lib} (using the random seed $1231$).
+
+%\begin{table}[h]
+%\caption{Timings for curves of degree $d$ with an ordinary $k$-fold point}%
+%\label{table ordinary k fold degree d}%
+%
+
+\[%
+\begin{tabular}
+[c]{|c|c|l|l|}\hline
+$k$ & \multicolumn{1}{|c|}{$d$} & \textsc{Singular} & \textsc{Maple}\\\hline
+\multicolumn{1}{|l|}{$5$} & \multicolumn{1}{|l|}{$10$} & $0$ & $0$\\
+\multicolumn{1}{|l|}{$15$} & \multicolumn{1}{|l|}{$20$} & $0$ & $3$\\
+\multicolumn{1}{|l|}{$15$} & \multicolumn{1}{|l|}{$30$} & $1$ & $1095$\\
+\multicolumn{1}{|l|}{$20$} & \multicolumn{1}{|l|}{$25$} & $0$ & $13$\\
+\multicolumn{1}{|l|}{$20$} & \multicolumn{1}{|l|}{$30$} & $1$ & $352$\\\hline
+\end{tabular}
+\ \
+\]
+
+
+\subsection{Curves with many \texorpdfstring{$A_{k}$}{Ak} singularities}
+
+The plane curves with defining equations
+\[
+f=\left(  X^{k+1}+Y^{k+1}+Z^{k+1}\right)  ^{2}-4\left(  X^{k+1}Y^{k+1}%
++Y^{k+1}Z^{k+1}+Z^{k+1}X^{k+1}\right)
+\]
+were given in \cite{Hirano1992} and have $3\left(  k+1\right)  $ singularities
+of type $A_{k}$ if $n$ is even. To ensure that all singularities of the curves
+are in the affine chart $\{Z\neq0\}$, we substitute $Z=2X-Y+1$.
+
+%\begin{table}[h]
+%\caption{Timings for curves with $3\left(  n+1\right)  $ singularities of type
+%$A_{n}$}%
+%\label{table Hirano}%
+\[%
+\begin{tabular}
+[c]{|r|l|l|}\hline
+$k$ & \textsc{Singular} & \textsc{Maple}\\\hline
+$6$ & \multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$11$}\\
+$8$ & \multicolumn{1}{|r|}{$18$} & \multicolumn{1}{|r|}{$109$}\\
+$10$ & \multicolumn{1}{|r|}{$240$} & \multicolumn{1}{|r|}{$4756$}\\\hline
+\end{tabular}
+\]
+%\end{table}
+The plane curves with defining equations
+\[
+f_{5,n}=X^{2n}+Y^{2n}+Z^{2n}+2(X^{n}Z^{n}-X^{n}Y^{n}+Y^{n}Z^{n})
+\]
+were given in \cite{Cogolludo1999} and have $3n$ singularities of type
+$A_{n-1}$ if $n$ is odd. We now substitute $Z=X-2Y+1$.
+
+%\begin{table}[h]
+%\caption{Timings for curves with $3n$ singularities of type $A_{n-1}$.}%
+%\label{table COGOLLUDO}%
+\[%
+\begin{tabular}
+[c]{|r|l|l|}\hline
+$n$ & \textsc{Singular} & \textsc{Maple}\\\hline
+$5$ & \multicolumn{1}{|r|}{$1$} & \multicolumn{1}{|r|}{$3$}\\
+$7$ & \multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$37$}\\
+$9$ & \multicolumn{1}{|r|}{$27$} & \multicolumn{1}{|r|}{$478$}\\
+$11$ & \multicolumn{1}{|r|}{$53$} & \multicolumn{1}{|r|}{$>6000$}\\\hline
+\end{tabular}
+\
+\]
+%\end{table}
+
+
+\subsection{More general singularities\label{sec some more general examples}}
+
+We now consider some examples of curves which have singularities of a type
+other than $ADE$ or ordinary multiple points:
+
+\begin{enumerate}
+{\scriptsize \setlength{\leftskip}{-2em} }
+
+\item {\scriptsize $f=-X^{15}+21X^{14}-8X^{13}Y+6X^{13}+16X^{12}%
+Y-20X^{11}Y^{2}+X^{12}-8X^{11}Y+36X^{10}Y^{2}-24X^{9}Y^{3}-4X^{9}Y^{2}%
++16X^{8}Y^{3}-26X^{7}Y^{4}+6X^{6}Y^{4}-8X^{5}Y^{5}-4X^{3}Y^{6}+Y^{8}$: one
+singularity at the origin with multiplicity $m=8$ and delta invariant
+$\delta=42$, a node, and a set of $6$ conjugate nodes. [Pfister]} \todo{Pfister refers to?}
+
+\item {\scriptsize $f=(Y^{4}+2X^{3}Y^{2}+X^{6}+X^{5}Y)^{3}+X^{11}Y^{11}$: one
+singularity at the origin with $m=12$ and $\delta=133$. [Pfister]} \todo{Pfister refers to?}
+
+\item {\scriptsize $f=(Y^{5}+Y^{4}X^{7}+2X^{8})(Y^{3}+7X^{4})(Y^{7}%
++2X^{12})(Y^{11}+2X^{18})+Y^{30}$: one singularity at the origin with $m=26$
+and $\delta=523$.}
+
+\item {\scriptsize $f=(Y^{15}+2X^{38})(Y^{19}+7X^{52})+Y^{36}$: one
+singularity at the origin with $m=34$ and $\delta=1440$.}
+
+\item {\scriptsize $f=(Y^{15}+2X^{38})(Y^{19}+7X^{52})+Y^{100}$: higher
+degree, but same type of singularity.}
+
+\item {\scriptsize \label{exam:Hoeij1} $f=Y^{40}+XY^{13}+X^{4}Y^{5}%
++X^{5}+2X^{4}+X^{3}$: one double point with $\delta=2$ and one triple point
+with $\delta=19$ (see \cite[Section 6.1]{vanHoeij94}).}
+
+\item {\scriptsize $f=Y^{200}+XY^{13}+X^{4}Y^{5}+X^{5}+2X^{4}+X^{3}$: higher
+degree, but same type of singularity.}
+
+\item {\scriptsize $f=(Y^{35}+Y^{34}X^{7}+2X^{38})(Y^{33}+7X^{44}%
+)(Y^{37}+2X^{52})+Y^{110}$: one singularity at the origin with $m=105$ and
+$\delta=6528$.}
+\end{enumerate}
+
+Although some of the examples have only one singularity at the origin, we
+apply the local and the global algorithm in all cases. That is, in the columns
+labelled \emph{Origin}, we compute the timings for the local contribution to
+the integral basis at the origin, which does not involve the decomposition of
+the singular locus. In the columns labelled \emph{Global}, we decompose the
+singular locus, compute the local contributions, and combine them.
+
+\todo{How are the Maple timings under origin taken?
+In the Singular* column, I do not understand the two bad timings in the middle.}
+\[%
+\begin{tabular}
+[c]{c|c|c|c|c|c|c}
+& \multicolumn{2}{|c|}{Origin} & \multicolumn{3}{|c|}{Global} & \\\hline
+\multicolumn{1}{|c|}{No.} & \textsc{Singular} & \textsc{Maple} &
+\textsc{Singular}{} & \textsc{Singular}{}$^{*}$ & \textsc{Maple} &
+\multicolumn{1}{|l|}{$Y$--degree}\\\hline
+\multicolumn{1}{|c|}{$1$} & \multicolumn{1}{|r|}{$0$} &
+\multicolumn{1}{|r|}{$0$} & \multicolumn{1}{|r|}{$0$} &
+\multicolumn{1}{|r|}{$5$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$8$}\\
+\multicolumn{1}{|c|}{$2$} & \multicolumn{1}{|r|}{$36$} &
+\multicolumn{1}{|r|}{$2$} & \multicolumn{1}{|r|}{$37$} &
+\multicolumn{1}{|r|}{$37$} & \multicolumn{1}{|r|}{$2$} &
+\multicolumn{1}{|r|}{$12$}\\
+\multicolumn{1}{|c|}{$3$} & \multicolumn{1}{|r|}{$2$} &
+\multicolumn{1}{|r|}{$6$} & \multicolumn{1}{|r|}{$>6000$} &
+\multicolumn{1}{|r|}{$41$} & \multicolumn{1}{|r|}{$16$} &
+\multicolumn{1}{|r|}{$30$}\\
+\multicolumn{1}{|c|}{$4$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$10$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$>6000$} & \multicolumn{1}{|r|}{$12$} &
+\multicolumn{1}{|r|}{$36$}\\
+\multicolumn{1}{|c|}{$5$} & \multicolumn{1}{|r|}{$0$} &
+\multicolumn{1}{|r|}{$47$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$>6000$} & \multicolumn{1}{|r|}{$115$} &
+\multicolumn{1}{|r|}{$100$}\\
+\multicolumn{1}{|c|}{$6$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$0$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$1$} & \multicolumn{1}{|r|}{$1$} &
+\multicolumn{1}{|r|}{$40$}\\
+\multicolumn{1}{|c|}{$7$} & \multicolumn{1}{|r|}{$9$} &
+\multicolumn{1}{|r|}{$12$} & \multicolumn{1}{|r|}{$35$} &
+\multicolumn{1}{|r|}{$10$} & \multicolumn{1}{|r|}{$50$} &
+\multicolumn{1}{|r|}{$200$}\\
+\multicolumn{1}{|c|}{$8$} & \multicolumn{1}{|r|}{$154$} &
+\multicolumn{1}{|r|}{$5708$} & \multicolumn{1}{|r|}{$>6000$} &
+\multicolumn{1}{|r|}{$>6000$} & \multicolumn{1}{|r|}{$>6000$} &
+\multicolumn{1}{|r|}{$110$}\\\hline
+\end{tabular}
+\
+\]
+%\end{table}
+
+
+In the column \textsc{Singular}{}$^{*}$, we use modular techiques for
+computing the decomposition of the singular locus. \newpage In this table, the
+computations in Singular that did not finish are all due to the computation of
+the
+\todo{This can easily be avoided. First insert the origin into the equations of the
+singular locus to check whether the origin is a singular point. Then there are
+two possibilities. 1) Compute a global and a local Groebner basis
+and compare dimensions. See Lecture 9 in the book Decker/Lossen.
+2) Saturate in the maximal ideal of the origin. That might be slower than 1),
+but if there are more singularities, it will lead to an easier primary
+decomposition problem. Santiago, please make tests.} decomposition of the
+singular locus (although we know that these examples have only one singularity
+at the origin).
+
+\vspace{0.5cm}
+
+We note that in most cases, our proposed algorithm is much faster than the
+algorithm implemented in \textsc{Maple}{}. Note, however, that in the last
+table, there is one example in which \textsc{Singular}{} is significantly
+slower than \textsc{Maple}{}. In this example, the algorithm runs into an
+algebraic field extension of high degree. At current state, the handling of
+such extensions in \textsc{Singular}{} is far from being optimal.
+%We expect this issue to be resolved in the near future, which will improve
+%our timings in these cases.
+
+
+\bibliographystyle{plain}
+\bibliography{mybib}
+
+
+
+\end{document}
+
+
+%\begin{remark}
+%We always can find an integral basis of type
+%\[
+%1,\frac{p_{1}}{x^{e_{1}}},\dots,\frac{p_{n-1}}{x^{e_{n-1}}}.
+%\]
+%\todo{fix this: if only singularities with $x = 0$ occur. Move to a later section.}
+%\end{remark}
+
+\begin{remark}
+Let $L=\overline{K}$ and let $A=L[x,y]=L[X,Y]/\left\langle f\right\rangle $ be
+denote the coordinate ring of $C$ with $f\in K[X][Y]$ monic in $Y$ of degree
+$n$. Let $a_{1},...,a_{s}\in L$ denote the $x$-coordinates of the
+singularities of $C$. Then there are $p_{i}\in K[X][Y]$ with $\deg_{Y}%
+(p_{i})=i$ for all $i$ and $e_{i,j}\in\mathbb{N}_{0}$ with $e_{i,j}\geq
+e_{i-1,j}$, such that, as an $L[X]$-module%
+\[
+\bar{A}=_{L[X]}\left\langle \frac{\bar{p}_{0}}{\bar{q}_{0}},\ldots,\frac
+{\bar{p}_{n-1}}{\bar{q}_{n-1}}\right\rangle \subseteq
+Q(A)=L(X)[Y]/\left\langle f\right\rangle
+\]
+with%
+\[
+q_{i}=%
+%TCIMACRO{\dprod \limits_{j=1}^{s}}%
+%BeginExpansion
+{\displaystyle\prod\limits_{j=1}^{s}}
+%EndExpansion
+(X-a_{j})^{e_{i,j}}\in K[X]\text{.}%
+\]
+
+
+If $a_{1}=0$ and $P=\left\langle x,y\right\rangle $ then, as an
+$L[X]_{\left\langle X\right\rangle }$-module,%
+\[
+\overline{A_{P}}=\left\langle \frac{\bar{p}_{0}}{x^{e_{0,1}}},\ldots
+,\frac{\bar{p}_{n-1}}{x^{e_{n-1,1}}}\right\rangle
+\]
+and%
+\[
+\overline{\widehat{A_{P}}}=\left\langle \frac{\bar{p}_{0}}{x^{e_{0,1}}}%
+,\ldots,\frac{\bar{p}_{n-1}}{x^{e_{n-1,1}}}\right\rangle \subseteq
+Q(A_{P})\otimes_{A_{P}}\widehat{A_{P}}%
+\]
+as an $L[[X]]$-module.
+\end{remark}
+
+
+\begin{proof}
+By van Hoeij's algorithm the claim for $\bar{A}$ is clear. The second claim
+follows since $\_\otimes_{A}A_{P}$ is right exact, $\overline{A_{P}}%
+=\overline{A}_{P}$, and $x-a$ is a unit in $\overline{A_{P}}$ if $a\neq0$. The
+third claim follows since $\_\otimes_{A_{P}}\widehat{A_{P}}$ is right exact
+and $\widehat{\overline{A_{P}}}=\overline{\widehat{A_{P}}}$, since the
+semilocal ring $\overline{A_{P}}$ is excellent.
+\end{proof}

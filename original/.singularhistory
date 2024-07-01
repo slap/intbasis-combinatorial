@@ -1,0 +1,57 @@
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+3x3y + x4)*(y^7 + 6x4y3 + 2xy + x7)*(y5+7xy-4x2)*(y3+x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+printlevel = 3;
+LIB"integralbasis.lib";
+ring R = 0,(x,y),dp;
+poly f = x^(30)+x^2*y^2+y^(11);
+map phi = R,x+2*y+x^2+x*y+y^2+x^3,3*x+5*y+x^2*y+y^2;
+poly g =phi(f);
+int t = timer;
+list l1 = integralBasis(g, 2, "atOrigin");
+bF
+classes
+printlevel = 3;
+LIB"integralbasis.lib";
+ring R = 0,(x,y),dp;
+poly f = x^(30)+x^2*y^2+y^(11);
+map phi = R,x+2*y+x^2+x*y+y^2+x^3,3*x+5*y+x^2*y+y^2;
+poly g =phi(f);
+int t = timer;
+list l1 = integralBasis(g, 2, "atOrigin");
+LIB"integralbasis.lib";
+ring R = 0,(x,y),dp;
+poly f = x^(30)+x^2*y^2+y^(11);
+map phi = R,x+2*y+x^2+x*y+y^2+x^3,3*x+5*y+x^2*y+y^2;
+poly g =phi(f);
+int t = timer;
+list l1 = integralBasis(g, 2, "atOrigin");
+LIB"integralbasis.lib";
+ring R = 0,(x,y),dp;
+poly f = x^(30)+x^2*y^2+y^(11);
+map phi = R,x+2*y+x^2+x*y+y^2+x^3,3*x+5*y+x^2*y+y^2;
+poly g =phi(f);
+int t = timer;
+list l1 = integralBasis(g, 2, "atOrigin");
+LIB"integralbasis.lib";
+ring R = 0,(x,y,x0),dp;
+poly f = x^(30)+x^2*y^2+y^(11);
+map phi = R,x+2*y+x^2+x*y+y^2+x^3,3*x+5*y+x^2*y+y^2;
+poly g =phi(f);
+g;
+LIB"normal.lib";
+ring r=0,(x,y,z,w,t),dp;   //dim 2, dim s_locus 1
+ideal i= x2+zw, y3+xwt, xw3+z3t+ywt2, y2w4-xy2z2t-w3t3;
+int t = timer;
+normal(i, "noGBRadical");
+timer - t;
+LIB"normal.lib";
+ring r=0,(x,y,z,w,t),dp;   //dim 2, dim s_locus 1
+ideal i= x2+zw, y3+xwt, xw3+z3t+ywt2, y2w4-xy2z2t-w3t3;
+int t = timer;
+normal(i, "noGBRadical");
+
+[200~int t = timer;
+normal(i, "noGBRadical");

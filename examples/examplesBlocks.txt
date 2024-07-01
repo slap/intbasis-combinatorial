@@ -1,0 +1,70 @@
+cd c:/Users/slapl/Dropbox/repos/intbasis/LIBCode
+cd c:/Users/Usuario/Dropbox/repos/intbasis/LIBCode
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y3+x2)*(y2-x3)+y6;
+integralBasis(f,2);
+PuiseuxList(f);
+
+
+/////////////
+
+// CHECK!!
+
+printlevel = 5;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y7 + x4) * (y7 + y6x + x4)*(y7 + y5x3 + x4)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"Optimization: ", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+/////////////
+
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y4+ x4)*(y^7 + 2xy + x2)*(y5+7x3)*(y3+x2)*(y3-x2)*(y2-x3)+y30;
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"Optimization: ", timer - t;
+t = timer;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+/////////////
+
+printlevel = 20;
+LIB"integralbasis.lib";
+ring r = 0, (x,y), dp;
+poly f = (y7 + x4) * (y7 + y5x3 + x4)+y30;
+list l2 = integralBasis(f,2, "atOrigin", "noOpti");
+
+int t = timer;
+list l1 = integralBasis(f,2, "atOrigin");
+"Optimization: ", timer - t;
+t = timer;
+"Chinese remainder: ", timer - t;
+
+reduce(l1[1], groebner(l2[1]));
+reduce(l2[1], groebner(l1[1]));
+
+
+
+cd c:/Users/Usuario/Dropbox/repos/intbasis/LIBCode
+
+/// MAPLE
+
+with(algcurves);
+f := (Y^7 + X^4) * (Y^7 + Y^5*X^3 + X^4)+Y^30;
+puiseux(f,X=0,Y,0)
+intBasis := integral_basis(f, X, Y);
