@@ -79,11 +79,11 @@
 
 
 \begin{document}
-\title[Combinatorial approach for integral bases]{A combinatorial approach for computing integral}
+\title[Combinatorial approach for integral bases]{A combinatorial approach for computing integral bases}
 \author{J. Boehm, W. Decker, S. Laplagne, G. Pfister}
 
 \begin{abstract}
-In this work we present a new approach for computing an integral basis of an algebraic function field of one variable in characteristic zero. Our approach uses combinatorial optimization and it can be a good strategy when the curve have many branches at the singularity.
+In this work we present a new approach for computing an integral basis of an algebraic function field of one variable in characteristic zero. Our approach uses combinatorial optimization and it can be a good strategy when the curve has many branches at the singularity.
 \end{abstract}
 \maketitle
 
@@ -162,13 +162,22 @@ Given $f \in K[X,Y]$, we note $\tilde f \in K[[X]][Y]$ the product of the branch
 
 \subsection{Valuations}
 
-We recall some useful valuation formulas. We note $L\{\{X\}\}$ the field of Puiseux expansions.
+We recall some useful valuation formulas. We note $L\{\{X\}\}$ the field of Puiseux series. A nonzero $f \in L\{\{X\}\}$ can be written uniquely as
+$$
+f = \sum_{k = k_0}^\infty c_k X^{k / n}
+$$
+with $c_k \in L$ for all $k \ge k_0$, $c_{k_0} \neq 0$ and $n \in \N$. We define $\upsilon_X(f) = \frac{k_0}{n}$, the valuation of $f$.
+The corresponding \emph{valuation ring}
+$L\{\{X\}\}_{\upsilon\geq0}=\bigcup_{k=1}^{\infty}L[[X^{1/k}]]$ consists of all Puiseux series
+with non-negative exponents only. Henceforth it will be denoted by ${\mathcal{P}_{X}}$.
+
 
 \begin{defn}[Valuation of a polynomial at a Puiseux expansion]
 If $q\in L\{\{X\}\}[Y]$ is any polynomial in $Y$ with coefficients in
 $L\{\{X\}\}$, the {\emph{valuation}} of $q$ at $\gamma\in L\{\{X\}\}$ is
 defined to be
-$$\upsilon_{\gamma}(q)=\upsilon(q(X,\gamma)).$$
+$$\upsilon_{\gamma}(q)=\upsilon_X(q(\gamma)),$$
+the order of 
 \end{defn}
 
 By the properties of valuations, we obtain
@@ -194,11 +203,11 @@ From the definitions, we obtain the following formulae
 Let $\gamma \in L\{\{X\}\}$ and $q$ a monic polynomial of degree $d\geq 1$ in $Y$.  %where $1\leq d \leq m-1$,
 If $q=(Y-\eta_{1}(X))\cdots(Y-\eta_{d}(X))$ is the factorization of $q$ in $L\{\{X\}\}[Y]$, then
 \[
-\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon(\gamma-\eta_{j})
+\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon_X(\gamma-\eta_{j})
 \]
 and, for $\{\gamma_{1},\dots,\gamma_{m}\}$ the set of Puiseux expansions of $g$,
 \[
-\upsilon_{g}(q)=\min_{1 \leq i \leq m}\sum_{j=1}^{d}\upsilon(\gamma_{i}-\eta_{j})\text{.}%
+\upsilon_{g}(q)=\min_{1 \leq i \leq m}\sum_{j=1}^{d}\upsilon_X(\gamma_{i}-\eta_{j})\text{.}%
 \]
 \end{lemma}
 
@@ -214,7 +223,7 @@ an integer $d$ with $1\leq d \leq m-1$. If $\mathcal{A}\subset\{1,\dots,m\}$ is
 a subset of cardinality $d$, set
 \[
 \Int({\mathcal{A}})=\min_{i\not \in \mathcal{A}}\left(  \sum_{j\in\mathcal{A}%
-}\upsilon(\gamma_{i}-\gamma_{j})\right).
+}\upsilon_X(\gamma_{i}-\gamma_{j})\right).
 \]
 Choose a subset $\widetilde{\mathcal{A}}\subset\{1,\dots,m\}$ of cardinality
 $d$ such that $\Int({\widetilde{\mathcal{A}}})$ is maximal among all
@@ -225,9 +234,9 @@ maximal valuation $\upsilon_{g}(q)$, for
 $q\in L\{\{X\}\}[Y]$ monic of degree $d$ in $Y$.
 \end{lemma}
 
-For $d = m - 1$, we call $\upsilon_{g}(\widetilde{p}_d)$ the integrality exponent of $g$, it is the maximum exponent of the denominators in an integral basis of $g$.
+For $d = m - 1$, we call $E(g):=\lfloor \upsilon_{g}(\widetilde{p}_d) \rfloor$ the maximal integrality exponent with respect to $g$. It is the maximum exponent of the denominators in an integral basis of $g$.
 
-For our combinatorial approach, it will be easier to work in this ring $\mathcal{P}_{X}[Y]$ and once we determine which is the optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
+For our combinatorial approach, it will be easier to work in the ring $\mathcal{P}_{X}[Y]$ and once we determine which is the optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
 
 \begin{lemma}
 \label{same exp} Let $g\in K[[X]][Y]$ be a square-free monic polynomial of degree
@@ -262,7 +271,7 @@ $\widetilde{p}_d$ maximizes the valuation over $L\{\{X\}\}$.
 
 \section{One Puiseux block}
 
-Let $\Gamma \subset \Px[Y]$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is the same or conjugated. We assume first that $f$ has only one Puiseux block.
+Let $\Gamma \subset \Px$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is the same or conjugated. We assume first that $f$ has only one Puiseux block.
 
 To compute an integral basis of $f$, we compute for each $0 \le d < \deg(f)$ a monic polynomial $p \in K[X][Y]$ of degree $d$ with maximal valuation at $f$ among all monic polynomials of degree $d$.
 
@@ -280,7 +289,7 @@ the set of Puiseux expansions in a conjugacy class of $f$. In Algorithm \ref{alg
 \caption{Polynomials factors}          % give the algorithm a caption
 \label{algo:factors}
 \begin{algorithmic}[1]
-\REQUIRE $\Delta=\left\{  \delta_{1},\ldots,\delta_{m}\right\}$ the set of Puiseux expansions at the origin in a conjugacy class of $f$, developed up to the integrality exponent $N$ of $f$.
+\REQUIRE $\Delta=\left\{  \delta_{1},\ldots,\delta_{m}\right\}$ the set of Puiseux expansions at the origin in a conjugacy class of $f$, developed up to the integrality exponent $N := E(f)$ of $f$.
 \ENSURE A set $Q \subset K[X][Y]$ of all the possible factors of an integral basis element coming from the conjugacy class $\Delta$.
 \STATE Let $\{t_1, \dots, t_s\}$ be the extended characteristic exponents of the expansions.
 \FORALL {$t \in \{t_1, \dots, t_s\}$}
@@ -325,7 +334,6 @@ q_{7/2} &= (Y-IX^{3/2})(Y+IX^{3/2})) = Y^2 + X^3,\\
 Computing these polynomials for all the conjugacy classes of $f$ we get all possible factors of $p$.
 The next step is to determine the exponents of these factors so that the resulting polynomial has the desired degree and maximal valuation. We do this by exhaustive search among all possible combinations.
 The key argument for our algorithm in this case is that the valuation of $\gamma \in \Gamma$ at a polynomial $q \in K[X][Y]$ is always the same for all expansions $\gamma$ in the same conjugacy class.
-
 We obtain Algorithm \ref{algo:oneBlock}.
 
 
@@ -333,7 +341,7 @@ We obtain Algorithm \ref{algo:oneBlock}.
 \caption{Integral basis element, one Puiseux block}          % give the algorithm a caption
 \label{algo:oneBlock}
 \begin{algorithmic}[1]
-\REQUIRE $\Delta_1, \dots, \Delta_s$ the conjugacy classes of Puiseux expansions at the origin of a monic polynomial $f \in K[X][Y]$, developed up to the maximum integrality exponent; a non-negative integer $d$, $0 \leq d \leq n = \deg_Y(\tilde f)$.
+\REQUIRE $\Delta_1, \dots, \Delta_s$ the conjugacy classes of Puiseux expansions at the origin of a monic polynomial $f \in K[X][Y]$, developed up to the maximum integrality exponent of $f$; a non-negative integer $d$, $0 \leq d \leq n = \deg_Y(\tilde f)$.
 \ENSURE a polynomial $p \in K[X][Y]$ of degree $d$ of maximal valuation at the set of expansions $\Delta = \Delta_1 \cup \dots \cup \Delta_s$ among all monic polynomials of degree $d$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $f$.
 \STATE For each conjugacy class $\Delta_i$, $1 \le i \le s$, apply Algorithm \ref{algo:factors} to compute the corresponding polynomials factors.
 \STATE Consider the set $\{p_1, \dots, p_m\} \subset K[X][Y]$ of all the polynomials from all the conjugacy classes, and let $d_1, \dots, d_m$ be the corresponding degrees.
@@ -385,7 +393,7 @@ We consider now the case of several Puiseux blocks.
 %We will take first a theoretical approach, working over the Puiseux field, and we will explain later how to turn it into an effective algorithm.
 %The approach we will take is to consider how many expansions in each Puiseux block.
 Let $\Gamma$ be the set of all Puiseux expansions of $f$ and let $\Pi_1, \dots, \Pi_s$ be the Puiseux blocks of $f$.
-For each Puiseux block $\Pi_{i}$ let $f_i$ be the corresponding
+For each Puiseux block $\Pi_{i}$, let $f_i$ be the corresponding
 factor of $f$ in $K[[X]][Y]$ (that is, $f_i = \prod_{\gamma \in \Pi_i} (Y - \gamma)$). Let $m_i$ be the cardinal of $\Pi_i$ (and hence also the $Y$-degree of $f_i$).
 
 We address first the (theoretical) problem of finding for each $0 \le d < n$ a polynomial $p_d \in \Px[Y]$ of maximal valuation at $\tilde f$ among all polynomials of degree $d$.
@@ -395,14 +403,14 @@ p_d = p_{(1)} \cdot \dots \cdot p_{(s)},
 $$
 where $p_{(i)} \in \mathcal{P}_{X}[Y]$, $1 \le i \le s$, is a polynomial whose Puiseux expansions are a subset of the expansions of $\Pi_i$.
 
-Note that although $\upsilon_{\gamma}(pq) = \upsilon_{\gamma}(p) + \upsilon_{\gamma}(q)$ for a single Puiseux expansion $\gamma$, it is not true in general that $\upsilon_{g}(pq) = \upsilon_{g}(p) + \upsilon_{g}(q)$ for a polynomial $g$, so even if we fix the degrees $c_1, \dots, c_s$ of the polynomials $p_{(1)}, \dots, p_{(s)}$, we cannot directly split the problem into one smaller problem for each branch. In \cite{intbas} we used the Chinese remainder theorem to merge the integral bases for the branches. In this section we will compute the polynomials $p_d$, $0 \le d < n$ by exhaustive search over all possible tuples of degrees $(c_1, \dots, c_s)$. In the next section we will show how to optimize the strategy using a combinatorial approach.
+Note that although $\upsilon_{\gamma}(pq) = \upsilon_{\gamma}(p) + \upsilon_{\gamma}(q)$ for a single Puiseux expansion $\gamma$, it is not true in general that $\upsilon_{g}(pq) = \upsilon_{g}(p) + \upsilon_{g}(q)$ for a polynomial $g$, so even if we fix the degrees $c_1, \dots, c_s$ of the polynomials $p_{(1)}, \dots, p_{(s)}$, we cannot directly split the problem into smaller problems, one for each branch. In \cite{intbas} we used the Chinese remainder theorem to merge the integral bases for the branches. In this section we will compute the polynomials $p_d$, $0 \le d < n$ by exhaustive search over all possible tuples of degrees $(c_1, \dots, c_s)$. In the next section we will show how to optimize the strategy using a combinatorial approach.
 
 We recall the valuation formula from Lemma \ref{lemma:gammaAtq}. For $q \in \mathcal{P}_{X}[Y]$ of degree $d$ with Puiseux expansions $\{\eta_1, \dots, \eta_d\}$,
 $$
-\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon(\gamma-\eta_{j}).
+\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon_X(\gamma-\eta_{j}).
 $$
 By the definition of Puiseux blocks, we deduce that if $\gamma \in \Gamma$ is not in $\Pi_{j}$ then $\upsilon_{\gamma} (p_{(j)})$ only depends on the degree $c_j$ of $p_{(j)}$ and not on the specific expansions of $p_{(j)}$.
-Since $\upsilon(\gamma - \eta)$ is the same for any $\gamma \in\Pi_{i}$ and $\eta \in \Pi_j$, $i \ne j$, we note $\upsilon_{ij}$ this value. We obtain the following formulae.
+Since $\upsilon_X(\gamma - \eta)$ is the same for any $\gamma \in\Pi_{i}$ and $\eta \in \Pi_j$, $i \ne j$, we note $\upsilon_{ij}$ this value. We obtain the following formulae.
 
 \begin{lemma}
 \label{formula:blocks}
@@ -526,15 +534,15 @@ where $p_{(i)} \in \Px[Y]$, $1 \le i \le s$, is a polynomial whose Puiseux expan
 
 The key
 property for the combinatorial approach is that if $1 \leq i < j \leq s$, then for any $\gamma \in\Gamma_{i}$ and $\eta \in \Gamma_{j}$,
-$$\upsilon(\gamma - \eta) = \upsilon(\gamma),$$
-because the initial term of $\gamma$ has smaller or equal degree than the initial term of $\eta$ (and if they have equal degree, they have different coefficients). We call $\upsilon_i = \upsilon(\gamma)$, for any $\gamma \in \Gamma_i$.
+$$\upsilon_X(\gamma - \eta) = \upsilon_X(\gamma),$$
+because the initial term of $\gamma$ has smaller or equal degree than the initial term of $\eta$ (and if they have the same degree, they have different coefficients). We define $\upsilon_i = \upsilon_X(\gamma)$, for every $\gamma \in \Gamma_i$.
 
 We obtain the following formulae (compare with Lemma \ref{formula:blocks}).
 \begin{lemma}
 \label{formula:sets}
-Let $\Gamma_1, \dots, \Gamma_s$ be the sets of Puisseux classes of a polynomial $f \in K[X][Y]$, and assume that for $i < j$ the order of the expansions in $\Gamma_i$ is smaller or equal than the order of the expansions in $\Gamma_j$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puisseux expansions of $p_{(i)}$ are a subset of the expansions in $\Gamma_i$. Then, for $i < j$, if $\gamma \in \Gamma_i$ and $\eta \in \Gamma_j$,
+Let $\Gamma_1, \dots, \Gamma_s$ be the conjugacy classes of Puiseux expansions of a polynomial $f \in K[X][Y]$, and assume that for $i < j$ the valuation of the expansions in $\Gamma_i$ is smaller or equal than the valuation of the expansions in $\Gamma_j$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puisseux expansions of $p_{(i)}$ are a subset of $\Gamma_i$. Then, for $i < j$, if $\gamma \in \Gamma_i$ and $\eta \in \Gamma_j$,
 $$
-\upsilon_{\gamma}(p_{(j)}) = c_j \upsilon(\eta) = c_j \upsilon_i \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon(\gamma) = c_i \upsilon_i.
+\upsilon_{\gamma}(p_{(j)}) = c_j \upsilon_X(\eta) = c_j \upsilon_i \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon_X(\gamma) = c_i \upsilon_i.
 $$
 
 For $p = p_{(1)} \cdots p_{(s)}$ and any $\gamma \in \Gamma_i$,
@@ -587,12 +595,12 @@ c_{1} \upsilon_i + \upsilon_{{\Theta_{i+1}}}(q_{2})\}.}
 
 \begin{remark}
 \label{remark:duples}
-In this formula, only $\upsilon_{{\Gamma_{i}}}(q_{1})$ and $\upsilon_{{\Theta_{i+1}}}(q_{2})$ depend on the actual expansions and not only on the number of expansions. Hence, if we fix the degrees $c_1, c_2$ of $q_1, q_2$ respectively, we can split the problem of computing the the polynomial $q$ with maximal valuation at $f_{\Theta_{i}}$ into the two smaller problems of computing the polynomial $q_1$ with maximal valuation at $f_{\Gamma_{i}}$ and the polynomial $q_2$ of maximal valuation at ${\Theta_{i+1}}$.
+In this formula, only $\upsilon_{{\Gamma_{i}}}(q_{1})$ and $\upsilon_{{\Theta_{i+1}}}(q_{2})$ depend on the actual expansions and not only on the number of expansions. Hence, if we fix the degrees $c_1, c_2$ of $q_1, q_2$ respectively, we can split the problem of computing the polynomial $q$ with maximal valuation at $f_{\Theta_{i}}$ into the two smaller problems of computing the polynomial $q_1$ with maximal valuation at $f_{\Gamma_{i}}$ and the polynomial $q_2$ of maximal valuation at ${\Theta_{i+1}}$.
 \end{remark}
 
 \subsection{Effective algorithm}
-We will use the remark to determine $p_{\Theta_{i}}(c)$, for $0 \leq c \leq m_{i} +
-\dots+ m_{s}$, the polynomial in $K[X][Y]$ of $Y$-degree $c$ with maximal valuation at $f_i \cdots f_s$, by decreasing induction on $i$, starting with $i = s$.
+We will use Remark \ref{remark:duples} to determine, for $0 \leq c \leq m_{i} +
+\dots+ m_{s}$, the polynomial $p_{\Theta_{i}}(c)$ in $K[X][Y]$ of $Y$-degree $c$ with maximal valuation at $f_i \cdots f_s$, by decreasing induction on $i$, starting with $i = s$.
 
 As with the formulae in the previous sections, Lemma \ref{formula:duples} is still valid if we replace the polynomials $q_1, q_2 \in \Px[Y]$ with polynomials $\bar q_1, \bar q_2 \in K[X][Y]$ whose Puiseux expansions are truncations of the expansions in $q_1, q_2$ at degrees equal or higher than the first extended characeteristic exponents.
 
@@ -694,7 +702,7 @@ the elements of the local integral basis corresponding to $\Theta_{3}$ are
 $$\{(1, 0), (Y, 5/2), (\overline{f_{\Gamma_3}}^{\le 10}, 10)\}.$$
 
 For $i = 2$, we set $\Theta_{2} = \Gamma_2 \cup \Gamma_3$. The
-elements of local integral basis corresponding to $\Gamma_{2}$ are
+elements of the local integral basis corresponding to $\Gamma_{2}$ are
 $$\{(1, 0), (Y,
 1), (Y^2+X^3, 13/4), (Y\cdot(Y^2 + X^3), 19/4), (\overline{f_{\Gamma_2}}^{\le 10}, 10)\}.$$
 Now we compute the elements with maximal valuation at $\Theta_2$, testing for each $0 \le d \le 6$ all duples $(c_2, c_3)$ such that $d = c_1 + c_2$. We obtain the following polynomials:
@@ -816,7 +824,7 @@ No. & Branches & $Y$-degree & Combinatorial & Chinese remainder & Maple         
 \
 \]
 
-We observe that the combinatorial approach presented in this work is always fast for these examples. The approach merging the local contributions to the integral basis using the Chinese Remainder theorem is slow when the polynomial has low degree. Surprisingly, it is very fast when the polynomial has large degree. The reasong seems to be that in the case of large degree the groebner basis computations are faster because the large degree monomials are separated from the low degree ones. When compared with Maple, we observe that our approach is always faster than Maple. The computations in Maple is very sensible to the degree of the polynomial.
+We observe that the combinatorial approach presented in this work is always fast for these examples. The approach merging the local contributions to the integral basis using the Chinese Remainder theorem is slow when the polynomial has low degree. Surprisingly, it is very fast when the polynomial has large degree. The reason seems to be that in the case of large degree the groebner basis computations are faster because the large degree monomials are separated from the low degree ones. When compared with Maple, we observe that our approach is always faster than Maple. The computations in Maple are very sensible to the degree of the polynomial.
 
 \bibliographystyle{plain}
 \bibliography{mybib}
