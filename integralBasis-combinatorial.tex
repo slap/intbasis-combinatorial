@@ -149,7 +149,7 @@ $\widetilde{p}_{i}(X,Y)/d(X)$ to lowest terms.
 \end{remark}
 
 In \cite{intbas} we presented an algorithm to compute integral bases computing the local contributions to the normalization at each branch of the curve at the singularities, and merging the contributions using the Chinese remainder theorem. This local approach is usually fast when the number of branches at each singularity is small, but it can be computationally
-slow when there are many branches, since the cofactors requiered for the Chinese remainder force the computations to be developed up to a high order, and summing up the local results and computing the integral basis from that requires the computation of Groebner bases of possibly complicated ideals.
+slow when there are many branches, since the cofactors required for the Chinese remainder force the computations to be developed up to a high order, and summing up the local results and computing the integral basis from that requires the computation of Groebner bases of possibly complicated ideals.
 
 We present a direct approach that computes the integral basis at the origin
 handling all the different conjugacy classes together, without computing
@@ -286,7 +286,7 @@ Following \cite[Algorithm 6]{intbas}, let $\Delta=\left\{  \delta_{1},\ldots,\de
 the set of Puiseux expansions in a conjugacy class of $f$. In Algorithm \ref{algo:factors} we provide a procedure to compute all possible factors of $p$ coming from this class of expansions.
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{Polynomials factors}          % give the algorithm a caption
+\caption{\texttt{PolynomialsFactors}}          % give the algorithm a caption
 \label{algo:factors}
 \begin{algorithmic}[1]
 \REQUIRE $\Delta=\left\{  \delta_{1},\ldots,\delta_{m}\right\}$ the set of Puiseux expansions at the origin in a conjugacy class of $f$, developed up to the integrality exponent $N := E(f)$ of $f$.
@@ -343,9 +343,9 @@ We obtain Algorithm \ref{algo:oneBlock}.
 \begin{algorithmic}[1]
 \REQUIRE $\Delta_1, \dots, \Delta_s$ the conjugacy classes of Puiseux expansions at the origin of a monic polynomial $f \in K[X][Y]$, developed up to the maximum integrality exponent of $f$; a non-negative integer $d$, $0 \leq d \leq n = \deg_Y(\tilde f)$.
 \ENSURE a polynomial $p \in K[X][Y]$ of degree $d$ of maximal valuation at the set of expansions $\Delta = \Delta_1 \cup \dots \cup \Delta_s$ among all monic polynomials of degree $d$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $f$.
-\STATE For each conjugacy class $\Delta_i$, $1 \le i \le s$, apply Algorithm \ref{algo:factors} to compute the corresponding polynomials factors.
-\STATE Consider the set $\{p_1, \dots, p_m\} \subset K[X][Y]$ of all the polynomials from all the conjugacy classes, and let $d_1, \dots, d_m$ be the corresponding degrees.
-\STATE Define $C = \{(c_1, \dots, c_m) \in \Z_{\ge 0}^m : c_1 d_1  + \dots c_m d_m = d\}$, the set of all the possible $m$-tuples.
+\STATE For each $1 \le i \le s$, let $P_i = \texttt{PolynomialFactors}(\Delta_i)$, the polynomials factors corresponding to $\Delta_i$.
+\STATE Consider the set $\{p_1, \dots, p_m\} = \cup_{i=1}^s P_i \subset K[X][Y]$ of all the polynomials obtained from all the conjugacy classes, and let $d_1, \dots, d_m$ be the corresponding degrees.
+\STATE Define $C = \{(c_1, \dots, c_m) \in \Z_{\ge 0}^m : c_1 d_1  + \dots c_m d_m = d\}$, the set of all possible $m$-tuples.
 \STATE For each $\bm{c} \in C$, compute the valuation of $p_{\bm c} = p_1^{c_1}\cdots p_m^{c_m}$ at $\tilde f$ by the second formula in Lemma \ref{lemma:gammaAtq}.
 \RETURN $(p, \upsilon_{\tilde f}(p))$, for $p$ the polynomial with maximal valuation at $\tilde f$ among all the polynomials computed.
 \end{algorithmic}
@@ -468,7 +468,7 @@ maximal valuation at $\tilde f$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $\
 \FOR {$i = 1, \dots, s$}
 \STATE $\tilde p_{(i, c_i)} = \texttt{IntegralElementOneBlock}(\Pi_i, c_i)$.
 \ENDFOR
-\STATE $p_{\bm{c}} := \tilde p_{(1,c_{1})}\cdots \tilde p_{(s, c_{s})}$
+\STATE $p_{\bm{c}} = \tilde p_{(1,c_{1})}\cdots \tilde p_{(s, c_{s})}$
 \STATE $\upsilon_{\tilde f}(p_{\bm{c}})=\min_{1 \leq i \leq s}\left\{\left(\sum_{j \ne i} c_j \upsilon_{ij}\right) + \upsilon_{\Pi_i}(\tilde p_{(i, c_i)})\right\}$.
 \ENDFOR
 \STATE $p^{*} = p_{\bm{c}}$ for $\bm{c} \in C_d$ such that $\upsilon_{\tilde f}(p_{\bm{c}})$ is maximal
@@ -644,17 +644,17 @@ We obtain Algorithm \ref{algo:iterative}.
 
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{\texttt{IntegralBasisTterative}}          % give the algorithm a caption
+\caption{\texttt{IntegralBasisIterative}}          % give the algorithm a caption
 \label{algo:iterative}
 \begin{algorithmic}[1]
 \REQUIRE $\Gamma_1, \dots, \Gamma_s$ the sets of Puiseux expansions at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$ of degree $n$, ordered increasingly by the order of the expansions, developed up to the integrality exponent $N$ of $f$; $m_i, 1 \le i \le s$, the cardinal of $\Gamma_i$.
 \ENSURE $\{(p_0, o_0), \dots, (p_{n}, o_{n})\}$ such that $p_d \in K[X][Y]$ has $Y$--degree $d$ and
 maximal valuation at $f$ among all polynomials of $Y$-degree $d$ and $o_d \in \Q_{\geq 0}$, $o_d = \upsilon_f(p_d)$.
 \IF{$s = 1$}
-\RETURN $\{(\tilde p_{(1, c)}, \upsilon_{f}(\tilde p_{(1, c)})\}_{c= 0, \dots, n}$ (computed using Algorithm \ref{algo:exhaustive}).
+\RETURN $\{(\tilde p_{(1, c)}, \upsilon_{f}(\tilde p_{(1, c)}) = \texttt{ExhaustiveSearch}(\Gamma_1, c))\}_{c= 0, \dots, n}$ % (Algorithm \ref{algo:exhaustive})
 \ELSE
 %\STATE $\Theta_s := \Gamma_s$, $f_{\Theta_s} := f_{\Gamma_s}$
-\STATE $\Theta_s := \Gamma_s$
+\STATE $\Theta_s = \Gamma_s$
 \STATE $\{(p_{(\Theta_s,c)}, o(\Theta_s, c))\}_{c = 0, \dots, m_s} = \IntegralBasisIterative(\Theta_s)$
 %\STATE $(p_{\Theta_s}(m_s), o(\Theta_s, m_s)) = q_N$ as defined in Algorithm \ref{algo:factors}.
 \FOR{$i = s-1, \dots, 1$}
