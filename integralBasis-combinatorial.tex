@@ -117,7 +117,7 @@ In particular, $A$
 is integral over $K[x]$, which implies that $\overline{A}$ coincides with the
 integral closure of $K[x]$ in $K(C)$. We may, hence,
 represent $\overline{A}$ either by generators over $A$ or by generators over
-$K[x]$. Note that by Remark \ref{rem:free-ness-over-pid}, $\overline{A}$
+$K[x]$. Note that by \cite[Remark 2]{intbas}, $\overline{A}$
 is a free $K[x]$-module of rank
 \[
 n:=\deg_{Y}(f)=[K(C):K(x)].
@@ -176,8 +176,7 @@ with non-negative exponents only. Henceforth it will be denoted by ${\mathcal{P}
 If $q\in L\{\{X\}\}[Y]$ is any polynomial in $Y$ with coefficients in
 $L\{\{X\}\}$, the {\emph{valuation}} of $q$ at $\gamma\in L\{\{X\}\}$ is
 defined to be
-$$\upsilon_{\gamma}(q)=\upsilon_X(q(\gamma)),$$
-the order of 
+$$\upsilon_{\gamma}(q)=\upsilon_X(q(\gamma)).$$
 \end{defn}
 
 By the properties of valuations, we obtain
@@ -190,22 +189,23 @@ $$
 
 \begin{defn}[Valuation of a polynomial at another polynomial]
 Let $\Gamma=\{\gamma_{1},\dots,\gamma_{m}\}$ be the set of Puiseux
-expansions of $g$. The {\emph{valuation}} of a polynomial $q\in L\{\{X\}\}[Y]$
+expansions of a polynomial $g \in L\{\{X\}\}[Y]$. The {\emph{valuation}} of a polynomial $q\in L\{\{X\}\}[Y]$
 at $g$ is defined to be
 $$\upsilon_{g}(q)=\min_{1 \leq i \leq m} \upsilon_{\gamma_{i}}(q),$$
 which we also note $\upsilon_{\Gamma}(q)$.
 \end{defn}
 
-From the definitions, we obtain the following formulae
+From the definitions, we obtain the following formulae.
 
 \begin{lemma}
 \label{lemma:gammaAtq}
-Let $\gamma \in L\{\{X\}\}$ and $q$ a monic polynomial of degree $d\geq 1$ in $Y$.  %where $1\leq d \leq m-1$,
+Let $\gamma \in L\{\{X\}\}$ and let $q \in L\{\{X\}\}[Y]$ be a monic polynomial of degree $d\geq 1$ in $Y$.  %where $1\leq d \leq m-1$,
 If $q=(Y-\eta_{1}(X))\cdots(Y-\eta_{d}(X))$ is the factorization of $q$ in $L\{\{X\}\}[Y]$, then
 \[
-\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon_X(\gamma-\eta_{j})
+\upsilon_{\gamma}(q)= \sum_{j=1}^{d}\upsilon_X(\gamma-\eta_{j}).
 \]
-and, for $\{\gamma_{1},\dots,\gamma_{m}\}$ the set of Puiseux expansions of $g$,
+
+For a polynomial $g \in L\{\{X\}\}[Y]$ with Puiseux expansions $\{\gamma_{1},\dots,\gamma_{m}\}$,
 \[
 \upsilon_{g}(q)=\min_{1 \leq i \leq m}\sum_{j=1}^{d}\upsilon_X(\gamma_{i}-\eta_{j})\text{.}%
 \]
@@ -283,7 +283,7 @@ By Lemma \ref{lemma:intA}, we can assume that any expansion $\eta$ of $p$ is a t
 %Hence, instead of computing the polynomial $\tilde p \in \Px$ of maximal valuation by determining the number of expansions in each conjugacy class appearing in $\tilde p$, we will consider the factorization of a polynomial $p$ over the ground field and determine which factors appear in $p$ and to which power.
 
 Following \cite[Algorithm 6]{intbas}, let $\Delta=\left\{  \delta_{1},\ldots,\delta_{m}\right\}$ be
-the set of Puiseux expansions in a conjugacy class of $f$. In Algorithm \ref{algo:factors} we explain how to compute the possible factors of $p$ coming from this class of expansions.
+the set of Puiseux expansions in a conjugacy class of $f$. In Algorithm \ref{algo:factors} we provide a procedure to compute all possible factors of $p$ coming from this class of expansions.
 
 \begin{algorithm}[h]                      % enter the algorithm environment
 \caption{Polynomials factors}          % give the algorithm a caption
@@ -332,20 +332,20 @@ q_{7/2} &= (Y-IX^{3/2})(Y+IX^{3/2})) = Y^2 + X^3,\\
 \vspace{.5cm}
 
 Computing these polynomials for all the conjugacy classes of $f$ we get all possible factors of $p$.
-The next step is to determine the exponents of these factors so that the resulting polynomial has the desired degree and maximal valuation. We do this by exhaustive search among all possible combinations.
+The next step is to determine the multiplicity of these factors in the factorization of $p$ so that the resulting polynomial has the desired degree and maximal valuation. We do this by exhaustive search among all possible combinations.
 The key argument for our algorithm in this case is that the valuation of $\gamma \in \Gamma$ at a polynomial $q \in K[X][Y]$ is always the same for all expansions $\gamma$ in the same conjugacy class.
 We obtain Algorithm \ref{algo:oneBlock}.
 
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{Integral basis element, one Puiseux block}          % give the algorithm a caption
+\caption{\texttt{IntegralElementOneBlock}}          % give the algorithm a caption
 \label{algo:oneBlock}
 \begin{algorithmic}[1]
 \REQUIRE $\Delta_1, \dots, \Delta_s$ the conjugacy classes of Puiseux expansions at the origin of a monic polynomial $f \in K[X][Y]$, developed up to the maximum integrality exponent of $f$; a non-negative integer $d$, $0 \leq d \leq n = \deg_Y(\tilde f)$.
 \ENSURE a polynomial $p \in K[X][Y]$ of degree $d$ of maximal valuation at the set of expansions $\Delta = \Delta_1 \cup \dots \cup \Delta_s$ among all monic polynomials of degree $d$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $f$.
 \STATE For each conjugacy class $\Delta_i$, $1 \le i \le s$, apply Algorithm \ref{algo:factors} to compute the corresponding polynomials factors.
 \STATE Consider the set $\{p_1, \dots, p_m\} \subset K[X][Y]$ of all the polynomials from all the conjugacy classes, and let $d_1, \dots, d_m$ be the corresponding degrees.
-\STATE Define the set $C$ of all the possible $m$-tuples $(c_1, \dots, c_m)$ such that $c_1 d_1  + \dots c_m d_m = d$.
+\STATE Define $C = \{(c_1, \dots, c_m) \in \Z_{\ge 0}^m : c_1 d_1  + \dots c_m d_m = d\}$, the set of all the possible $m$-tuples.
 \STATE For each $\bm{c} \in C$, compute the valuation of $p_{\bm c} = p_1^{c_1}\cdots p_m^{c_m}$ at $\tilde f$ by the second formula in Lemma \ref{lemma:gammaAtq}.
 \RETURN $(p, \upsilon_{\tilde f}(p))$, for $p$ the polynomial with maximal valuation at $\tilde f$ among all the polynomials computed.
 \end{algorithmic}
@@ -456,22 +456,22 @@ is a polynomial in $K[X][Y]$ with maximal valuation at $\tilde f$ among all poly
 
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{Integral element by exhaustive search}          % give the algorithm a caption
+\caption{\texttt{ExhaustiveSearch}}          % give the algorithm a caption
 \label{algo:exhaustive}
 \begin{algorithmic}[1]
 \REQUIRE $\Pi_1, \dots, \Pi_s$ the Puiseux blocks of expansions at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$; $0 \leq d < n = \deg_Y(\tilde f)$.
 \ENSURE $p \in {\mathcal{P}_{X}}[Y]$ of $Y$--degree $d$ of
 maximal valuation at $\tilde f$; $o \in \Q_{\geq 0}$, the valuation of $p$ at $\tilde f$.
-\STATE $m_i = \#\Gamma_i$ for $i = 1, \dots, r$, the number of expansions in each Puiseux block
-\STATE $C_d = \{(c_1, \dots, c_r)\}_{c_i \in \N_0 \mbox{, } 0 \leq c_i \leq m_i \mbox{, } c_1 + \dots + c_r = d}$
+\STATE $m_i = \#\Pi_i$ for $i = 1, \dots, s$, the number of expansions in each Puiseux block
+\STATE $C_d = \{(c_1, \dots, c_s) \in \Z_{\ge 0}^s : 0 \leq c_i \leq m_i \mbox{, } c_1 + \dots + c_s = d\}$
 \FORALL {$\bm{c} = (c_1, \dots, c_s) \in C_d$}
 \FOR {$i = 1, \dots, s$}
-\STATE compute $\tilde p_{(i, c_i)}$ using Algorithm \ref{algo:oneBlock}.
+\STATE $\tilde p_{(i, c_i)} = \texttt{IntegralElementOneBlock}(\Pi_i, c_i)$.
 \ENDFOR
 \STATE $p_{\bm{c}} := \tilde p_{(1,c_{1})}\cdots \tilde p_{(s, c_{s})}$
 \STATE $\upsilon_{\tilde f}(p_{\bm{c}})=\min_{1 \leq i \leq s}\left\{\left(\sum_{j \ne i} c_j \upsilon_{ij}\right) + \upsilon_{\Pi_i}(\tilde p_{(i, c_i)})\right\}$.
 \ENDFOR
-\STATE $p^{*} = p_{\bm{c}}$ for $\bm{c} \in C_k$ such that $\upsilon_{\tilde f}(p_{\bm{c}})$ is maximal
+\STATE $p^{*} = p_{\bm{c}}$ for $\bm{c} \in C_d$ such that $\upsilon_{\tilde f}(p_{\bm{c}})$ is maximal
 \RETURN $(p^{*}, \upsilon_{\tilde f}(p^*))$.
 \end{algorithmic}
 \end{algorithm}
@@ -521,7 +521,7 @@ We explain in this section how to find the optimal $(c_{1}, \dots, c_{s}) \in C_
 efficient way. Instead of considering all tuples of $s$ elements, we will always
 consider duples and proceed iteratively.
 
-For this approach we group the Puiseux classes in sets by the initial term. All the Puiseux classes with the same (or conjugated) initial term are grouped in the same set. Let $\Gamma_1, \dots, \Gamma_s$ be the resulting sets of $f$, and let $f_1, \dots, f_s$ be the corresponding polynomials (this classification is similar to Puiseux segments except that if two classes have the same initial exponent but the corresponding coefficients are different, they are grouped in different sets).
+For this approach we group the Puiseux classes in sets by the initial term. All the Puiseux classes with the same (or conjugated) initial term are grouped in the same set. Let $\Gamma_1, \dots, \Gamma_s$ be the resulting sets of Puiseux expansions of $f$, and let $f_1, \dots, f_s$ be the corresponding polynomials (this classification is similar to Puiseux segments except that if two classes have the same initial exponent but the corresponding coefficients are different, they are grouped in different sets).
 %Recall that the expansions in each Puiseux segment $\Gamma_i$ have the same initial exponent (they correspond to the same face of the Newton polygon).
 We assume that the sets $\Gamma_1, \dots, \Gamma_s$ are ordered in increasing order by the initial exponent (the order between sets with the same initial exponent is not important).
 
@@ -644,10 +644,10 @@ We obtain Algorithm \ref{algo:iterative}.
 
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{Integral basis, iterative approach}          % give the algorithm a caption
+\caption{\texttt{IntegralBasisTterative}}          % give the algorithm a caption
 \label{algo:iterative}
 \begin{algorithmic}[1]
-\REQUIRE $\Gamma_1, \dots, \Gamma_s$ the sets of Puiseux expansions at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$ of degree $n$, ordered in increasing order by the initial terms of the expansions, developed up to the integrality exponent $N$ of $f$; $m_i, 1 \le i \le s$, the cardinal of $\Gamma_i$.
+\REQUIRE $\Gamma_1, \dots, \Gamma_s$ the sets of Puiseux expansions at the origin of a polynomial $f \in K[X,Y]$ monic in $Y$ of degree $n$, ordered increasingly by the order of the expansions, developed up to the integrality exponent $N$ of $f$; $m_i, 1 \le i \le s$, the cardinal of $\Gamma_i$.
 \ENSURE $\{(p_0, o_0), \dots, (p_{n}, o_{n})\}$ such that $p_d \in K[X][Y]$ has $Y$--degree $d$ and
 maximal valuation at $f$ among all polynomials of $Y$-degree $d$ and $o_d \in \Q_{\geq 0}$, $o_d = \upsilon_f(p_d)$.
 \IF{$s = 1$}
