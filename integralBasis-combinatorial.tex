@@ -370,7 +370,7 @@ The Puiseux expansions of $f$ are
 \end{aligned}
 \end{equation*}
 
-The integrality exponent of $f$ is 8. There are two classes of Puisex expansions: $\Delta_1 = \{\gamma_1, \gamma_2, \gamma_3, \gamma_4\}$ and $\Delta_2 = \{\gamma_5, \gamma_6\}$, and both classes are in the same Puiseux block. Applying Algorithm \ref{algo:factors} to $\Delta_1$ we obtain the factors $\{Y, Y^2 + X^3, \overline{f_{\Delta_1}}^{\le 8}\}$. Applying Algorithm \ref{algo:factors} to $\Delta_2$ we obtain the factors $\{Y, \overline{f_{\Delta_2}}^{\le 8}\}$. Now we apply Algorithm \ref{algo:oneBlock} for every $0 \le d \le 6$. We obtain the following elements:
+The integrality exponent of $f$ is 8. There are two classes of Puiseux expansions: $\Delta_1 = \{\gamma_1, \gamma_2, \gamma_3, \gamma_4\}$ and $\Delta_2 = \{\gamma_5, \gamma_6\}$, and both classes are in the same Puiseux block. Applying Algorithm \ref{algo:factors} to $\Delta_1$ we obtain the factors $\{Y, Y^2 + X^3, \overline{f_{\Delta_1}}^{\le 8}\}$. Applying Algorithm \ref{algo:factors} to $\Delta_2$ we obtain the factors $\{Y, \overline{f_{\Delta_2}}^{\le 8}\}$. Now we apply Algorithm \ref{algo:oneBlock} for every $0 \le d \le 6$. We obtain the following elements:
 $$
 \begin{aligned}[c]
 p_0 &= 1, \upsilon_{\tilde f}(p_0) = 0 \\
@@ -389,7 +389,7 @@ $$
 
 % In the direct approach we use Puiseux blocks. In the combinatorial approach we will use Puiseux segments.
 
-We consider now the case of several Puiseux blocks.
+We consider now the case of a polynomial $f \in K[X][Y]$ whose Puiseux expansions at the origin are grouped into several Puiseux blocks.
 %We will take first a theoretical approach, working over the Puiseux field, and we will explain later how to turn it into an effective algorithm.
 %The approach we will take is to consider how many expansions in each Puiseux block.
 Let $\Gamma$ be the set of all Puiseux expansions of $f$ and let $\Pi_1, \dots, \Pi_s$ be the Puiseux blocks of $f$.
@@ -414,7 +414,7 @@ Since $\upsilon_X(\gamma - \eta)$ is the same for any $\gamma \in\Pi_{i}$ and $\
 
 \begin{lemma}
 \label{formula:blocks}
-Let $\Pi_1, \dots, \Pi_s$ be the Puisseux blocks of a polynomial $f \in K[X][Y]$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be monic polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puisseux expansions of $p_{(i)}$ are a subset of the expansions in $\Pi_i$. Then, if $\gamma \in \Pi_i$ and $\eta \in \Pi_j$,
+Let $\Pi_1, \dots, \Pi_s$ be the Puiseux blocks of a polynomial $f \in K[X][Y]$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be monic polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puiseux expansions of $p_{(i)}$ are a subset of the expansions in $\Pi_i$. Then, if $\gamma \in \Pi_i$ and $\eta \in \Pi_j$,
 $$
 \upsilon_{\gamma}(p_{(j)}) = c_j \upsilon_{ij} \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon_{ij}.
 $$
@@ -515,18 +515,18 @@ Now we apply Algorithm \ref{algo:exhaustive} to combine the two blocks. For exam
 %
 
 %\todo{not true if same rational terms, we have to use puiseux segments}
-To apply Algorithm \ref{algo:exhaustive} we must run over all the elements
-in $C_{d}$. This can be very slow when $f$ has a large number of Puiseux classes, since the number of tuples to test grows exponentially with the number of Puiseux blocks.
+Let $f \in K[X][Y]$ and let $\Pi_1, \dots, \Pi_s$ be the Puiseux blocks of expansions $f$ at the origin, with cardinalities $m_1, \dots, m_s$, as before. To apply Algorithm \ref{algo:exhaustive} for computing the element of the integral basis of $f$ of degree $d$ we must run over all tuples in $C_{d} = \{(c_1, \dots, c_s) \in \Z_{\ge 0}^s : 0 \leq c_i \leq m_i \mbox{, } c_1 + \dots + c_s = d\}$.
+This can be very slow when $f$ has a large number of Puiseux classes, since the number of tuples to test grows exponentially with the number of Puiseux blocks.
 We explain in this section how to find the optimal $(c_{1}, \dots, c_{s}) \in C_{d}$ in an
 efficient way. Instead of considering all tuples of $s$ elements, we will always
-consider duples and proceed iteratively.
+consider ordered pairs and proceed iteratively.
 
-For this approach we group the Puiseux classes in sets by the initial term. All the Puiseux classes with the same (or conjugated) initial term are grouped in the same set. Let $\Gamma_1, \dots, \Gamma_s$ be the resulting sets of Puiseux expansions of $f$, and let $f_1, \dots, f_s$ be the corresponding polynomials (this classification is similar to Puiseux segments except that if two classes have the same initial exponent but the corresponding coefficients are different, they are grouped in different sets).
+For this approach we group the Puiseux classes in sets by the initial term. All the Puiseux classes with the same (or conjugated) initial term are grouped in the same set. Let $\Gamma_1, \dots, \Gamma_s$ be the resulting sets of Puiseux expansions of $f$, and let $f_1, \dots, f_s$ be the corresponding polynomials (this classification is similar to Puiseux segments defined in \cite[Section 7.2]{intbas} except that if two classes have the same initial exponent but the corresponding coefficients are different, they are grouped in different sets).
 %Recall that the expansions in each Puiseux segment $\Gamma_i$ have the same initial exponent (they correspond to the same face of the Newton polygon).
-We assume that the sets $\Gamma_1, \dots, \Gamma_s$ are ordered in increasing order by the initial exponent (the order between sets with the same initial exponent is not important).
+We assume that the sets $\Gamma_1, \dots, \Gamma_s$ are ordered by the initial exponent increasingly (the order between sets with the same initial exponent is not important).
 
 \subsection{Theoretical approach}
-As before, for each $0 \le d < n$, we look first for a polynomial $p_d \in \Px[Y]$ with maximal valuation at $\tilde f$. We can factorize
+As before, for each $0 \le d < n$, we look first for a polynomial $p_d \in \Px[Y]$ with maximal valuation at $\tilde f$. We now that any such polynomial can be factorized as
 $$
 p_d = p_{(1)} \cdot \dots \cdot p_{(s)},
 $$
@@ -535,12 +535,12 @@ where $p_{(i)} \in \Px[Y]$, $1 \le i \le s$, is a polynomial whose Puiseux expan
 The key
 property for the combinatorial approach is that if $1 \leq i < j \leq s$, then for any $\gamma \in\Gamma_{i}$ and $\eta \in \Gamma_{j}$,
 $$\upsilon_X(\gamma - \eta) = \upsilon_X(\gamma),$$
-because the initial term of $\gamma$ has smaller or equal degree than the initial term of $\eta$ (and if they have the same degree, they have different coefficients). We define $\upsilon_i = \upsilon_X(\gamma)$, for every $\gamma \in \Gamma_i$.
+because the initial term of $\gamma$ has smaller or equal degree than the initial term of $\eta$ (and if they have the same degree, they have different coefficients). We define $\upsilon_i = \upsilon_X(\gamma)$, for any $\gamma \in \Gamma_i$.
 
 We obtain the following formulae (compare with Lemma \ref{formula:blocks}).
 \begin{lemma}
 \label{formula:sets}
-Let $\Gamma_1, \dots, \Gamma_s$ be the conjugacy classes of Puiseux expansions of a polynomial $f \in K[X][Y]$, and assume that for $i < j$ the valuation of the expansions in $\Gamma_i$ is smaller or equal than the valuation of the expansions in $\Gamma_j$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puisseux expansions of $p_{(i)}$ are a subset of $\Gamma_i$. Then, for $i < j$, if $\gamma \in \Gamma_i$ and $\eta \in \Gamma_j$,
+Let $\Gamma_1, \dots, \Gamma_s$ be the sets of Puiseux expansions of a polynomial $f \in K[X][Y]$, and assume that for $i < j$ the valuation of the expansions in $\Gamma_i$ is smaller or equal than the valuation of the expansions in $\Gamma_j$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puiseux expansions of $p_{(i)}$ are a subset of $\Gamma_i$. Then, for $i < j$, if $\gamma \in \Gamma_i$ and $\eta \in \Gamma_j$,
 $$
 \upsilon_{\gamma}(p_{(j)}) = c_j \upsilon_X(\eta) = c_j \upsilon_i \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon_X(\gamma) = c_i \upsilon_i.
 $$
@@ -552,7 +552,7 @@ For $p = p_{(1)} \cdots p_{(s)}$ and any $\gamma \in \Gamma_i$,
 \]
 \end{lemma}
 
-As in Lemma \ref{formula:blocks}, only $\upsilon_{\gamma}(p_{(i)})$ depends on the actual Puiseux expansions of $p$. Hence, for fixed multiplicity $\bm{c} = (c_1, \dots, c_s)$, a polynomial with
+As in Lemma \ref{formula:blocks}, only $\upsilon_{\gamma}(p_{(i)})$ depends on the actual Puiseux expansions of $p$ and not only on the number of expansions in each set. Hence, for fixed multiplicities $\bm{c} = (c_1, \dots, c_s)$, a polynomial with
 maximal valuation at $f$ is
 $$\vardbtilde p_{\bm c} := \prod_{i = 1}^s \vardbtilde p_{(i, c_i)},$$
 where $\vardbtilde p_{(i, k)}$ is the polynomial in $\mathcal{P}_{X}[Y]$ of degree $k$ in $Y$ of maximal valuation at $\Gamma_i$, whose expansions are a subset of the expansions of $f_i$.
@@ -585,7 +585,7 @@ Similarly,
 
 We obtain the following formula.
 \begin{lemma}
-\label{formula:duples}
+\label{formula:pairs}
 For $q = q_1 q_2$ as above,
 \[\boxed{
 \upsilon_{{\Theta_{i}}}(q) = \min\{\upsilon_{{\Gamma_{i}}}(q_{1}) + c_{2} \upsilon_i,
@@ -594,15 +594,15 @@ c_{1} \upsilon_i + \upsilon_{{\Theta_{i+1}}}(q_{2})\}.}
 \end{lemma}
 
 \begin{remark}
-\label{remark:duples}
-In this formula, only $\upsilon_{{\Gamma_{i}}}(q_{1})$ and $\upsilon_{{\Theta_{i+1}}}(q_{2})$ depend on the actual expansions and not only on the number of expansions. Hence, if we fix the degrees $c_1, c_2$ of $q_1, q_2$ respectively, we can split the problem of computing the polynomial $q$ with maximal valuation at $f_{\Theta_{i}}$ into the two smaller problems of computing the polynomial $q_1$ with maximal valuation at $f_{\Gamma_{i}}$ and the polynomial $q_2$ of maximal valuation at ${\Theta_{i+1}}$.
+\label{remark:pairs}
+In this formula, only $\upsilon_{{\Gamma_{i}}}(q_{1})$ and $\upsilon_{{\Theta_{i+1}}}(q_{2})$ depend on the actual expansions and not only on the number of expansions. Hence, if we fix the degrees $c_1, c_2$ of $q_1, q_2$ respectively, we can split the problem of computing the polynomial $q$ with maximal valuation at $f_{\Theta_{i}}$ into the two smaller problems of computing the polynomial $q_1$ with maximal valuation at $f_{\Gamma_{i}}$ and the polynomial $q_2$ with maximal valuation at ${\Theta_{i+1}}$.
 \end{remark}
 
 \subsection{Effective algorithm}
-We will use Remark \ref{remark:duples} to determine, for $0 \leq c \leq m_{i} +
+We will use Remark \ref{remark:pairs} to determine, for $0 \leq c \leq m_{i} +
 \dots+ m_{s}$, the polynomial $p_{\Theta_{i}}(c)$ in $K[X][Y]$ of $Y$-degree $c$ with maximal valuation at $f_i \cdots f_s$, by decreasing induction on $i$, starting with $i = s$.
 
-As with the formulae in the previous sections, Lemma \ref{formula:duples} is still valid if we replace the polynomials $q_1, q_2 \in \Px[Y]$ with polynomials $\bar q_1, \bar q_2 \in K[X][Y]$ whose Puiseux expansions are truncations of the expansions in $q_1, q_2$ at degrees equal or higher than the first extended characeteristic exponents.
+As with the formulae in the previous sections, Lemma \ref{formula:pairs} is still valid if we replace the polynomials $q_1, q_2 \in \Px[Y]$ with polynomials $\bar q_1, \bar q_2 \in K[X][Y]$ whose Puiseux expansions are truncations of the expansions in $q_1, q_2$ at degrees equal or higher than the first extended characeteristic exponents.
 
 For each $1 \le i \le s$ and $1 \le c_i \le m_i$, we define $p_{\Gamma_{i}}(c_i) := \tilde p_{(i, c_i)} \in K[X][Y]$ (as defined in Section \ref{section:directApproach}).
 We can compute $\tilde p_{(i, c_i)}$ as before by exhaustive search using Algorithm \ref{algo:exhaustive} or, if the Puiseux set contains several Puiseux blocks, we can apply recursively the combinatorial approach  we develop now, as we will see below.
@@ -612,7 +612,7 @@ Proceeding inductively, once we have determined $p_{\Theta{i+1}}(c)$ for
 all $0 \leq c \leq m_{i+1} + \dots+ m_{s}$, we want to compute
 $p_{\Theta_{i}}(c)$ for all $0 \leq c \leq m_{i} + \dots+ m_{s}$.
 
-Using Lemma \ref{formula:duples} and Remark \ref{remark:duples} we can compute inductively
+Using Lemma \ref{formula:pairs} and Remark \ref{remark:pairs} we can compute inductively
 \[
 o(\Theta_{i}, c) = \max_{\substack{c_{1} + c_{2} = c \\ c_{1} \le m_i}} \upsilon_{{\Theta_{i}}%
 }(p_{\Gamma_{i}}(c_{1})p_{\Theta_{i+1}}(c_{2}))
@@ -705,7 +705,7 @@ For $i = 2$, we set $\Theta_{2} = \Gamma_2 \cup \Gamma_3$. The
 elements of the local integral basis corresponding to $\Gamma_{2}$ are
 $$\{(1, 0), (Y,
 1), (Y^2+X^3, 13/4), (Y\cdot(Y^2 + X^3), 19/4), (\overline{f_{\Gamma_2}}^{\le 10}, 10)\}.$$
-Now we compute the elements with maximal valuation at $\Theta_2$, testing for each $0 \le d \le 6$ all duples $(c_2, c_3)$ such that $d = c_1 + c_2$. We obtain the following polynomials:
+Now we compute the elements with maximal valuation at $\Theta_2$, testing for each $0 \le d \le 6$ all ordered pairs $(c_2, c_3)$ such that $d = c_1 + c_2$. We obtain the following polynomials:
 $$
 \begin{aligned}
 p_0 &= 1, \upsilon_{\Theta_2}(p_0) = 0, \\
@@ -751,7 +751,7 @@ The best element for $d= 4$ is then $p_4 = \overline{f_{\Gamma_3}}^{\le 10} \cdo
 
 \subsection{Expansions with common rational part}
 
-We consider now the case of a set $\Gamma_i$ of expansions containing more than one Puiseux block. In this case, the expansions have the same initial term, which is rational. Hence, we can substract from all the expansions in the set the common rational part. After removing the common rational part, the expansions will not be all in the same set, and we can apply Algorithm \ref{algo:iterative} to the resulting sets. To keep this presentation simple, we give an example of this case, but we do not introduce the corresponding modifications in Algorithm \ref{algo:iterative}
+We consider now the case of a set $\Gamma_i$ of expansions containing more than one Puiseux block. In this case, the expansions have the same initial term, which is rational. Hence, we can subtract from all the expansions in the set the common rational part. After removing the common rational part, the expansions will not be all in the same set, and we can apply Algorithm \ref{algo:iterative} to the resulting sets. To keep this presentation simple, we give an example of this case, but we do not introduce the corresponding modifications in Algorithm \ref{algo:iterative}.
 
 
 \begin{example}
@@ -824,7 +824,7 @@ No. & Branches & $Y$-degree & Combinatorial & Chinese remainder & Maple         
 \
 \]
 
-We observe that the combinatorial approach presented in this work is always fast for these examples. The approach merging the local contributions to the integral basis using the Chinese Remainder theorem is slow when the polynomial has low degree. Surprisingly, it is very fast when the polynomial has large degree. The reason seems to be that in the case of large degree the groebner basis computations are faster because the large degree monomials are separated from the low degree ones. When compared with Maple, we observe that our approach is always faster than Maple. The computations in Maple are very sensible to the degree of the polynomial.
+We observe that the combinatorial approach presented in this work is always fast for these examples. The approach merging the local contributions to the integral basis using the Chinese Remainder theorem is slow when the polynomial has low degree. Surprisingly, it is very fast when the polynomial has large degree. The reason seems to be that in the case of large degree the Groebner basis computations are faster because the large degree monomials are separated from the low degree ones. When compared with Maple, we observe that our approach is always faster than Maple. The computations in Maple are very sensible to the degree of the polynomial.
 
 \bibliographystyle{plain}
 \bibliography{mybib}
