@@ -286,7 +286,7 @@ Following \cite[Algorithm 6]{intbas}, let $\Delta=\left\{  \delta_{1},\ldots,\de
 the set of Puiseux expansions in a conjugacy class of $f$. In Algorithm \ref{algo:factors} we provide a procedure to compute all possible factors of $p$ coming from this class of expansions.
 
 \begin{algorithm}[h]                      % enter the algorithm environment
-\caption{\texttt{PolynomialsFactors}}          % give the algorithm a caption
+\caption{\texttt{PolynomialFactors}}          % give the algorithm a caption
 \label{algo:factors}
 \begin{algorithmic}[1]
 \REQUIRE $\Delta=\left\{  \delta_{1},\ldots,\delta_{m}\right\}$ the set of Puiseux expansions at the origin in a conjugacy class of $f$, developed up to the integrality exponent $N := E(f)$ of $f$.
@@ -542,7 +542,7 @@ We obtain the following formulae (compare with Lemma \ref{formula:blocks}).
 \label{formula:sets}
 Let $\Gamma_1, \dots, \Gamma_s$ be the sets of Puiseux expansions of a polynomial $f \in K[X][Y]$, and assume that for $i < j$ the valuation of the expansions in $\Gamma_i$ is smaller or equal than the valuation of the expansions in $\Gamma_j$. Let $p_{(1)}, \dots, p_{(s)} \in \mathcal{P}_{X}[Y]$ be polynomials of degree $c_1, \dots, c_s$ respectively such that for all $1 \le i \le s$, the Puiseux expansions of $p_{(i)}$ are a subset of $\Gamma_i$. Then, for $i < j$, if $\gamma \in \Gamma_i$ and $\eta \in \Gamma_j$,
 $$
-\upsilon_{\gamma}(p_{(j)}) = c_j \upsilon_X(\eta) = c_j \upsilon_i \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon_X(\gamma) = c_i \upsilon_i.
+\upsilon_{\gamma}(p_{(j)}) = c_j \upsilon_X(\gamma) = c_j \upsilon_i \quad \text{ and } \quad \upsilon_{\eta}(p_{(i)}) = c_i \upsilon_X(\gamma) = c_i \upsilon_i.
 $$
 
 For $p = p_{(1)} \cdots p_{(s)}$ and any $\gamma \in \Gamma_i$,
@@ -705,7 +705,7 @@ For $i = 2$, we set $\Theta_{2} = \Gamma_2 \cup \Gamma_3$. The
 elements of the local integral basis corresponding to $\Gamma_{2}$ are
 $$\{(1, 0), (Y,
 1), (Y^2+X^3, 13/4), (Y\cdot(Y^2 + X^3), 19/4), (\overline{f_{\Gamma_2}}^{\le 10}, 10)\}.$$
-Now we compute the elements with maximal valuation at $\Theta_2$, testing for each $0 \le d \le 6$ all ordered pairs $(c_2, c_3)$ such that $d = c_1 + c_2$. We obtain the following polynomials:
+Now we compute the elements with maximal valuation at $\Theta_2$, testing for each $0 \le d \le 6$ all ordered pairs $(c_1, c_2)$ such that $d = c_1 + c_2$. We obtain the following polynomials:
 $$
 \begin{aligned}
 p_0 &= 1, \upsilon_{\Theta_2}(p_0) = 0, \\
