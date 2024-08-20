@@ -112,7 +112,7 @@ mapping $1/h(x,y) \mapsto b(x,y) / x^c$, where $X^c = a f + b h\in K[X][Y]$
 is a representation which arises from a B\'ezout identity in $K(X)[Y]$ by clearing denominators.
 
 
-Since \(A\) is integral over \(K[x]\), \(\overline{A}\) is equal to the integral closure of \(K[x]\) in \(K(C)\). Hence, \(\overline{A}\) can be represented both as an $A$-module or as a module over $K[x] \cong K[X]$. As noted in \cite[Remark 2]{intbas}, \(\overline{A}\) forms a free \(K[x]\)-module with the rank given by:
+Since \(A\) is integral over \(K[x]\), \(\overline{A}\) is equal to the integral closure of \(K[x]\) in \(K(C)\). Hence, \(\overline{A}\) can be represented both as an $A$-module or as a module over $K[x] \cong K[X]$. As noted in \cite[Remark 2]{intbas}, \(\overline{A}\) is a free \(K[x]\)-module with the rank given by:
 \[
 n:=\deg_{Y}(f)=[K(C):K(x)].
 \]
@@ -120,7 +120,7 @@ n:=\deg_{Y}(f)=[K(C):K(x)].
 \begin{remark} (See \cite[Remark 4]{intbas}.)
 \label{rem:spec-int-basis}
 In the above setting, there exist
-polynomials $p_{i} \in K[X][Y]$ of degree $i$ in $Y$ and polynomials
+polynomials $p_{i} \in K[X][Y]$ monic of degree $i$ in $Y$ and polynomials
 $d_i\in K[X]$ such that
 \[
 \left\{1,\frac{p_{1}(x,y)}{d_1(x)},\dots,\frac{p_{n-1}(x,y)}{d_{n-1}(x)}\right\}
@@ -278,8 +278,8 @@ integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. Truncating every
 $\gamma_{j}$ to degree $\upsilon_{g}(\widetilde{p}_d)$, we obtain a polynomial $\overline
 {p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with the same valuation as $\widetilde{p}_d$. 
 Applying the trace map for
-$L(X^{1/k})$ over $L(X)$ to $\overline{p}_d$ to the $Y$-monic polynomial $\overline{p}_d$,  and dividing by the integer leading coefficient of the trace, we obtain a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
-\geq  \upsilon_{g}(\widetilde{p}_d)$ \footnote{Note that the trace map sends $X^{1/k}$ to zero.}
+$L(X^{1/k})$ over $L(X)$ to the $Y$-monic polynomial $\overline{p}_d$,  and dividing by the (integer) leading coefficient, we obtain a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
+\geq  \upsilon_{g}(\widetilde{p}_d)$\footnote{Note that the trace map sends $X^{1/k}$ to zero.}.
 Considering $p_d^\prime$ as a polynomial in $X$ and $Y$ with coefficients in $L$ and
 adjoining these coefficients to $K$, we obtain an extension $K \subset K^\prime$ of finite fields such that
 $p_d^\prime$ is in $K^\prime[X][Y]$. We then apply the trace map of the extension $K \subset K^\prime$ to $p_d^\prime$ and
