@@ -83,18 +83,16 @@
 \author{J. Boehm, W. Decker, S. Laplagne, G. Pfister}
 
 \begin{abstract}
-In this work we present a new approach for computing an integral basis of an algebraic function field of one variable in characteristic zero. Our approach uses combinatorial optimization and it can be a good strategy when the curve has many branches at the singularity.
+In this paper, we develop an improved algorithm for computing integral bases of plane curves, that is, function fields in one variable, in characteristic zero. The algorithm builds on our previous work \cite{intbas}.  As in \cite{intbas}, the problem is first reduced to the local case of a single singularity at the origin. The main improvement over \cite{intbas} is a combinatorial approach to find the numerators of the integral basis elements. Thus, we do not require to transform the module generators into triangular form. The new approach is particularly useful for curves with many branches at the singularity.
 \end{abstract}
 \maketitle
 
 \section{Introduction}
 \label{section:introduction}
 
-In this paper, we focus on  the case where $A$ is the coordinate ring
-of an algebraic curve defined over a field $K$ of characteristic zero.
-More precisely, let $f\in K[X,Y]$ be an irreducible polynomial
-%\todo{do we want irreducible or irreducible? See Remark 1.3 and Proposition 3.7.}
-in two variables, let $C\subset\mathbb{A}^{2}(K)$ be the affine plane curve
+In this paper, we develop an algorithm to compute the integral closure $\bar A$ in terms of an integral basis for the coordinate ring $A$
+of an algebraic curve. We focus on the case where the curve is defined over a field $K$ of characteristic zero.
+Let $f\in K[X,Y]$ be an irreducible polynomial in two variables, let $C\subset\mathbb{A}^{2}(K)$ be the affine plane curve
 defined by $f$, and let
 \[
 A=K[C]=K[X,Y]/\langle f(X,Y)\rangle
@@ -109,60 +107,84 @@ K(C)=\TQR(A)=K(x)[y]=K(X)[Y]/\langle f(X,Y)\rangle,
 \]
 where $x$ is a separating transcendence basis of $K(C)$ over $K$, and $y$ is
 integral over $K[x]$, with integrality equation $f(x,y)=0$.
-Indeed, we have the isomorphism $\TQR(K[x][y]) \rightarrow  K(x)[y]$ defined by
+Indeed, we have the isomorphism $\TQR(K[x,y]) \rightarrow  K(x)[y]$ defined by
 mapping $1/h(x,y) \mapsto b(x,y) / x^c$, where $X^c = a f + b h\in K[X][Y]$
 is a representation which arises from a B\'ezout identity in $K(X)[Y]$ by clearing denominators.
 
-In particular, $A$
-is integral over $K[x]$, which implies that $\overline{A}$ coincides with the
-integral closure of $K[x]$ in $K(C)$. We may, hence,
-represent $\overline{A}$ either by generators over $A$ or by generators over
-$K[x]$. Note that by \cite[Remark 2]{intbas}, $\overline{A}$
-is a free $K[x]$-module of rank
+
+Since \(A\) is integral over \(K[x]\), \(\overline{A}\) is equal to the integral closure of \(K[x]\) in \(K(C)\). Hence, \(\overline{A}\) can be represented both as an $A$-module or as a module over $K[x] \cong K[X]$. As noted in \cite[Remark 2]{intbas}, \(\overline{A}\) forms a free \(K[x]\)-module with the rank given by:
 \[
 n:=\deg_{Y}(f)=[K(C):K(x)].
 \]
 
-\begin{remark}
+\begin{remark} (See \cite[Remark 4]{intbas}.)
 \label{rem:spec-int-basis}
-In the context outlined above, there exist
+In the above setting, there exist
 polynomials $p_{i} \in K[X][Y]$ of degree $i$ in $Y$ and polynomials
 $d_i\in K[X]$ such that
 \[
 \left\{1,\frac{p_{1}(x,y)}{d_1(x)},\dots,\frac{p_{n-1}(x,y)}{d_{n-1}(x)}\right\}
 \]
 is an integral basis %\footnote{We say that such an integral basis is in \emph{triangular shape}.}  %\todo{needed?}
- for $\overline{A}$ over $K[x]$. In fact, such a
-basis is obtained from any given set of
-$K[x]$-module generators for $\overline{A}$ by unimodular row operations over
-the PID $K[X]$: Represent the given generators by polynomials of type
-$c_{i}=\sum_{j=0}^{n-1}c_{ij}Y^{n-1-j}$, with coefficients $c_{ij}\in K(X)$.
-Then take $d$ to be the least common denominator of the $c_{ij}$,
-transform the matrix $(d\cdot c_{ij})$ into Hermite normal form $(p_{ij})$,
-set $\widetilde{p}_{i}=\sum_{j=0}^{n-1}p_{n-1-i ,j}Y^{n-1-j}$ for each $i=0,\dots, n-1$,
-and let the ${p}_{i}(X,Y)/d_i(X)$ be obtained by reducing the
-$\widetilde{p}_{i}(X,Y)/d(X)$ to lowest terms.
-% NOT TRUE:
-%Then the $p_i$ are monic in $Y$
-%since otherwise we would not be able to represent the powers $y^i$ as
-%$K[x]$-linear combinations of $1,\dots, {p}_{i}(x,y)/d_{i} (x)$. \todo{wirklich richtig?}
+for $\overline{A}$ over $K[x]$.
+
 \end{remark}
 
+
+
+
+%In particular, $A$
+%is integral over $K[x]$, which implies that $\overline{A}$ coincides with the
+%integral closure of $K[x]$ in $K(C)$. We may, hence,
+%represent $\overline{A}$ either by module generators over $A$ or by generators over
+%$K[x] \cong K[X]$. Note that by \cite[Remark 2]{intbas}, $\overline{A}$
+%is a free $K[x]$-module of rank
+%\[
+%n:=\deg_{Y}(f)=[K(C):K(x)].
+%\]
+%
+%
+%\begin{remark}
+%\label{rem:spec-int-basis}
+%In the context outlined above, there exist
+%polynomials $p_{i} \in K[X][Y]$ of degree $i$ in $Y$ and polynomials
+%$d_i\in K[X]$ such that
+%\[
+%\left\{1,\frac{p_{1}(x,y)}{d_1(x)},\dots,\frac{p_{n-1}(x,y)}{d_{n-1}(x)}\right\}
+%\]
+%is an integral basis %\footnote{We say that such an integral basis is in \emph{triangular shape}.}  %\todo{needed?}
+% for $\overline{A}$ over $K[x]$. In fact, such a
+%basis is obtained from any given set of
+%$K[x]$-module generators for $\overline{A}$ by unimodular row operations over
+%the PID $K[X]$: Represent the given generators by polynomials of type
+%$c_{i}=\sum_{j=0}^{n-1}c_{ij}Y^{n-1-j}$, with coefficients $c_{ij}\in K(X)$.
+%Then take $d$ to be the least common denominator of the $c_{ij}$,
+%transform the matrix $(d\cdot c_{ij})$ into Hermite normal form $(p_{ij})$,
+%set $\widetilde{p}_{i}=\sum_{j=0}^{n-1}p_{n-1-i ,j}Y^{n-1-j}$ for each $i=0,\dots, n-1$,
+%and let the ${p}_{i}(X,Y)/d_i(X)$ be obtained by reducing the
+%$\widetilde{p}_{i}(X,Y)/d(X)$ to lowest terms.
+%% NOT TRUE:
+%%Then the $p_i$ are monic in $Y$
+%%since otherwise we would not be able to represent the powers $y^i$ as
+%%$K[x]$-linear combinations of $1,\dots, {p}_{i}(x,y)/d_{i} (x)$. \todo{wirklich richtig?}
+%\end{remark}
+
 In \cite{intbas} we presented an algorithm to compute integral bases computing the local contributions to the normalization at each branch of the curve at the singularities, and merging the contributions using the Chinese remainder theorem. This local approach is usually fast when the number of branches at each singularity is small, but it can be computationally
-slow when there are many branches, since the cofactors required for the Chinese remainder force the computations to be developed up to a high order, and summing up the local results and computing the integral basis from that requires the computation of Groebner bases of possibly complicated ideals.
+slow when there are many branches, since the cofactors required for the Chinese remainder force the computations to be developed up to a higher order. Moreover, summing up the result may lead to generators which are not in triangular shape, and computing the triangular shape can be computationally expensive.
 
-We present a direct approach that computes the integral basis at the origin
-handling all the different conjugacy classes together, without computing
-Groebner bases, and which is therefore usually faster.
+In this paper we present a modification of the algorithm in \cite{intbas} which uses a combinatorial procedure to obtain an integral basis at the origin
+handling all the different conjugacy classes at once, and directly return the generators in triangular shape.
 
-For simplicity we assume in this paper that $f$ has only one singularity and that this singularity is located at the origin.
-If there are more singularities or conjugated singularities, the techniques presented in \cite{intbas} can be used to reduce the problem to the one we study here.
+Using the techniques presented in \cite{intbas}, computing a global integral basis can be reduced the problem of computing polynomial generators for the normalization of the localization of $A$ at $x = 0$, assuming that the origin is the only singularity of the localization.
 
-Given $f \in K[X,Y]$, we note $\tilde f \in K[[X]][Y]$ the product of the branches of $f$ at the origin. Considering the decomposition $f = f_0 \tilde f$ given by the Weirstrass preparation theorem, where $f_0 \in K[[X]][Y]$ is a unit in $K[[X,Y]]$, we have shown in \cite[Proposition 41]{intbas} how to easily obtain an integral basis for $f$ from an integral basis from $\tilde f$. Hence, we will focus in this paper on computing the integral basis for $\tilde f$.
+%For simplicity we assume in this paper that $f$ has only one singularity and that this singularity is located at the origin.
+
+
+Given $f \in K[X,Y]$, we denote by $\tilde f \in K[[X]][Y]$ the product of the branches of $f$ at the origin. Considering the decomposition $f = f_0 \tilde f$ given by the Weirstrass preparation theorem, where $f_0 \in K[[X]][Y]$ is a unit in $K[[X,Y]]$, we have shown in \cite[Proposition 41]{intbas} how to easily obtain an integral basis for $f$ from an integral basis from $\tilde f$. Hence, we will focus in this paper on computing the integral basis for $\tilde f$.
 
 \subsection{Valuations}
 
-We recall some useful valuation formulas. We note $L\{\{X\}\}$ the field of Puiseux series. A nonzero $f \in L\{\{X\}\}$ can be written uniquely as
+We recall some useful valuation formulas. We denote $L\{\{X\}\}$ the field of Puiseux series over $L$. A nonzero $f \in L\{\{X\}\}$ can be written uniquely as
 $$
 f = \sum_{k = k_0}^\infty c_k X^{k / n}
 $$
@@ -192,7 +214,7 @@ Let $\Gamma=\{\gamma_{1},\dots,\gamma_{m}\}$ be the set of Puiseux
 expansions of a polynomial $g \in L\{\{X\}\}[Y]$. The {\emph{valuation}} of a polynomial $q\in L\{\{X\}\}[Y]$
 at $g$ is defined to be
 $$\upsilon_{g}(q)=\min_{1 \leq i \leq m} \upsilon_{\gamma_{i}}(q),$$
-which we also note $\upsilon_{\Gamma}(q)$.
+which we also denote by $\upsilon_{\Gamma}(q)$.
 \end{defn}
 
 From the definitions, we obtain the following formulae.
@@ -236,42 +258,41 @@ $q\in L\{\{X\}\}[Y]$ monic of degree $d$ in $Y$.
 
 For $d = m - 1$, we call $E(g):=\lfloor \upsilon_{g}(\widetilde{p}_d) \rfloor$ the maximal integrality exponent with respect to $g$. It is the maximum exponent of the denominators in an integral basis of $g$.
 
-For our combinatorial approach, it will be easier to work in the ring $\mathcal{P}_{X}[Y]$ and once we determine which is the optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
+For our combinatorial approach, it will be easier to work in the ring $\mathcal{P}_{X}[Y]$ and once we determine which is an optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
 
 \begin{lemma}
-\label{same exp} Let $g\in K[[X]][Y]$ be a square-free monic polynomial of degree
-$m\geq 1$ in $Y$, let $1\leq d \leq m-1$, and let $R$ be one of the rings $K[X]$,
+\label{same exp} Suppose $g\in K[[X]][Y]$ is a square-free monic polynomial of degree
+$m\geq 1$ in $Y$. Let $1\leq d \leq m-1$ be an integer, and denote by $R$ any of the rings $K[X]$,
 $K[X]_{\left\langle X\right\rangle }$, $K[[X]]$, $K((X))$, ${\mathcal{P}_{X}}$, or $L\{\{X\}\}$.
-The maximal valuation $\upsilon_{g}(q)$, $q\in R[Y]$ monic of degree $d$ in $Y$, is
-independent of the choice of $R$ from among this list.
+For a polynomial $q\in R[Y]$ which is monic of degree $d$ in $Y$, the maximal valuation $\upsilon_{g}(q)$ is
+independent of the choice of $R$ from the above list.
 \end{lemma}
 \begin{proof}
-For any ring $R$ as in the assertion, we have natural inclusions $K[X]\subset R \subset L\{\{X\}\}$.
-Hence, the value $\upsilon_{g}(q)$  is defined for any polynomial $q\in R[Y]$ and it suffices to show that
-there is a polynomial $p_d\in K[X][Y]$ such that $\upsilon_{g}(p_d)$ maximizes the valuation over $L\{\{X\}\}$
-in degree $d$. For this, we recall from Lemma \ref{lemma:intA} that there is a polynomial
+For any $R$ as in the statement, there are natural inclusions $K[X]\subset R \subset L\{\{X\}\}$.
+The valuation $\upsilon_{g}(q)$  is thus defined for any $q\in R[Y]$ and it is sufficient to prove that
+there is a polynomial $p_d\in K[X][Y]$ which maximizes the valuation $\upsilon_{g}(p)$ among all $p$ in $L\{\{X\}\}[Y]$
+of degree $d$. To see this, recall from Lemma \ref{lemma:intA} that there exist 
 $\widetilde{p}_d=\prod_{j\in\widetilde{\mathcal{A}}}(Y-\gamma_{j}) \in \mathcal{P}_{X}[Y]$
-which maximizes the valuation over $L\{\{X\}\}$ in degree $d$. We may choose an
-integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. By truncating each
-$\gamma_{j}$ to degree $\upsilon_{g}(\widetilde{p}_d)$, we get a polynomial $\overline
-{p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with $\upsilon_{g}(\overline{p}_d)
-= \upsilon_{g}(\widetilde{p}_d)$. Since $\overline{p}_d$ is monic in $Y$, by applying the trace map for
-$L(X^{1/k})$ over $L(X)$ to $\overline{p}_d$ and dividing by the integer leading coefficient of the resulting
-polynomial, we get a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
-\geq  \upsilon_{g}(\widetilde{p}_d)$ (note that the trace map sends $X^{1/k}$ to zero).
-Next, considering $p_d^\prime$ as a polynomial in $X, Y$ with coefficients in $L$ and
-adjoining these coefficients to $K$, we get a finite field extension $K \subset K^\prime$ such that
-$p_d^\prime \in K^\prime[X][Y]$. Applying the trace map of this extension to $p_d^\prime$ and
-dividing by the integer leading coefficient of the resulting polynomial, we get a monic polynomial
-$p_d\in K[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_d}) \geq  \upsilon_{g}(\widetilde{p}_d)$.
-In fact, by Lemma \ref{lemma:intA} and the choice of $\widetilde{p}_d$, equality holds since
+which maximizes the valuation over $L\{\{X\}\}$ in degree $d$. There exists an
+integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. Truncating every 
+$\gamma_{j}$ to degree $\upsilon_{g}(\widetilde{p}_d)$, we obtain a polynomial $\overline
+{p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with the same valuation as $\widetilde{p}_d$. 
+Applying the trace map for
+$L(X^{1/k})$ over $L(X)$ to $\overline{p}_d$ to the $Y$-monic polynomial $\overline{p}_d$,  and dividing by the integer leading coefficient of the trace, we obtain a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
+\geq  \upsilon_{g}(\widetilde{p}_d)$ \footnote{Note that the trace map sends $X^{1/k}$ to zero.}
+Considering $p_d^\prime$ as a polynomial in $X$ and $Y$ with coefficients in $L$ and
+adjoining these coefficients to $K$, we obtain an extension $K \subset K^\prime$ of finite fields such that
+$p_d^\prime$ is in $K^\prime[X][Y]$. We then apply the trace map of the extension $K \subset K^\prime$ to $p_d^\prime$ and
+divide the result by its leading coefficient. This gives a monic polynomial
+$p_d\in K[X][Y]$ of degree $d$ in $Y$ satisfying $\upsilon_{g}({p_d}) \geq  \upsilon_{g}(\widetilde{p}_d)$.
+Note that Lemma \ref{lemma:intA} and the choice of $\widetilde{p}_d$, the inequality is in fact an equality since
 $\widetilde{p}_d$ maximizes the valuation over $L\{\{X\}\}$.
 %Note that $K[X]$ is included in all the rings $R$ in the above list, hence the reverse inequalities are trivial, and the result follows.
 \end{proof}
 
 \section{One Puiseux block}
 
-Let $\Gamma \subset \Px$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is the same or conjugated. We assume first that $f$ has only one Puiseux block.
+Let $\Gamma \subset \Px$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is identical or conjugated. We assume first that $f$ has only one Puiseux block.
 
 To compute an integral basis of $f$, we compute for each $0 \le d < \deg(f)$ a monic polynomial $p \in K[X][Y]$ of degree $d$ with maximal valuation at $f$ among all monic polynomials of degree $d$.
 
