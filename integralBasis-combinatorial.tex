@@ -84,16 +84,16 @@
 
 \begin{abstract}
 In \cite{intbas}, we gave an algorithm for computing integral bases in function fields
-of plane curves which has  quasi-optimal  runtime \cite{M1}. Our approach is local-to-global in 
-the sense that we first compute a local contribution to the normalization at each singularity of the 
-curve, and then put these local contributions together. To find a local contribution at a given 
-singularity in the first step, we rely on Puiseux expansions and Hensel lifting to find a contribution 
-to the normalization at each branch of the singularity, and then merge these contributions using 
-Chinese remaindering. In this paper, we present a combinatorial approach for merging which often 
-performs better in practise, notably in cases where the curve has a large number of branches at 
+of plane curves which has  quasi-optimal  runtime \cite{M1}. Our approach is local-to-global in
+the sense that we first compute a local contribution to the normalization at each singularity of the
+curve, and then put these local contributions together. To find a local contribution at a given
+singularity in the first step, we rely on Puiseux expansions and Hensel lifting to find a contribution
+to the normalization at each branch of the singularity, and then merge these contributions using
+Chinese remaindering. In this paper, we present a combinatorial approach for merging which often
+performs better in practise, notably in cases where the curve has a large number of branches at
 one of its singularities.
-%In this paper, we develop an improved algorithm for computing integral bases of plane curves, that is, function fields in one variable, in characteristic zero. 
-%The algorithm builds on our previous work \cite{intbas}.  As in \cite{intbas}, the problem is first reduced to the local case of a single singularity at the origin. 
+%In this paper, we develop an improved algorithm for computing integral bases of plane curves, that is, function fields in one variable, in characteristic zero.
+%The algorithm builds on our previous work \cite{intbas}.  As in \cite{intbas}, the problem is first reduced to the local case of a single singularity at the origin.
 %The main improvement over \cite{intbas} is a combinatorial approach to find the numerators of the integral basis elements. Thus, we do not require to transform the module generators into triangular form. The new approach is particularly useful for curves with many branches at the singularity.
 \end{abstract}
 \maketitle
@@ -149,12 +149,12 @@ for $\overline{A}$ over $K[x]$.
 
 \end{remark}
 
-In \cite{intbas}, we gave an algorithm to compute integral bases for $\overline{A}$ which is 
-local-to-global in the following sense: First, for each prime ideal $P$ of the singular locus $\Sing(A)$, 
-find a local contribution to the integral basis at $P$. Second, add up these local contributions. 
+In \cite{intbas}, we gave an algorithm to compute integral bases for $\overline{A}$ which is
+local-to-global in the following sense: First, for each prime ideal $P$ of the singular locus $\Sing(A)$,
+find a local contribution to the integral basis at $P$. Second, add up these local contributions.
 In this paper, we are concerned with  improving the first step. For simplicity of our presentation, we assume that
-$\Sing(A)$ consists of just one prime ideal $P$, and that this prime ideal defines a $K$-rational singularity 
-of $C$ which is located at the origin\footnote{If there are more singularities or conjugated singularities, 
+$\Sing(A)$ consists of just one prime ideal $P$, and that this prime ideal defines a $K$-rational singularity
+of $C$ which is located at the origin\footnote{If there are more singularities or conjugated singularities,
 the techniques presented in \cite{intbas} allow us to reduce the problem to the case dealt with here.}.
 
 In this setting, consider the decomposition
@@ -165,23 +165,24 @@ f=f_{0}\widetilde{f}=f_{0} f_{1}\cdots f_{r}
 given by the Weierstrass preparation theorem (see \cite{Abhyankar}, \cite{JP}).
 Here, $f_{0}\in K[[X]][Y]$ is a unit in $K[[X,Y]]$, and $f_{1}, \dots, f_{r}\in K[[X]][Y]$ are irreducible
 Weierstrass polynomials to which we refer as the \emph{branches} of $f$ (over $K$, centered at
-$P$). If $g=f$, $g= \widetilde{f}$, or $g$ is one of the branches $f_i$, and 
+$P$). If $g=f$, $g= \widetilde{f}$, or $g$ is one of the branches $f_i$, and
 $$B_g=K[[x]][y] =K[[X]][Y]/\langle g \rangle,$$
-then it makes sense to speak of integral bases for $\overline{B_g}$ over $K[[x]]$ (see \cite{intbas}). 
+then it makes sense to speak of integral bases for $\overline{B_g}$ over $K[[x]]$ (see \cite{intbas}).
 
-Integral bases for the $\overline{B_{f_i}}$ can be computed using Puiseux series and Hensel lifting 
-as discussed in \cite{intbas}. Merging the computed bases gives us an integral basis for 
-$\overline{B_{\widetilde{f}}}$. From this, we can read off an integral basis for $\overline{B_{{f}}}$ 
-as described in \cite[Proposition 41]{intbas}. This basis is the desired local contribution to the 
-integral basis for $\overline{A}$ at $P$. 
+Integral bases for the $\overline{B_{f_i}}$ can be computed using Puiseux series and Hensel lifting
+as discussed in \cite{intbas}. Merging the computed bases gives us an integral basis for
+$\overline{B_{\widetilde{f}}}$. From this, we can read off an integral basis for $\overline{B_{{f}}}$
+as described in \cite[Proposition 41]{intbas}. This basis is the desired local contribution to the
+integral basis for $\overline{A}$ at $P$.
 
-In our previous paper, the merging of the integral bases for the $\overline{B_{\widetilde{f_i}}}$ 
+In our previous paper, the merging of the integral bases for the $\overline{B_{\widetilde{f_i}}}$
 is done using Chinese remaindering. This can be inefficient if there is a large number of branches
 of $f$ at $P$. Indeed, to find the cofactors required for the Chinese remainder step, we
-may need to develop the involved Puiseux expansions up to a high order, and the merging of the 
-integral bases may require the computation of Gr\"obner bases of possibly complicated ideals.
-In contrast, the direct method introduced in this paper can handle all conjugacy classes
-simultaneously, without computing Gr\"obner bases.
+may need to develop the involved Puiseux expansions up to a high order. 
+Moreover, summing up the result may lead to generators which are not in triangular shape, and computing the triangular shape can be computationally expensive.
+
+In this paper we present a modification of the algorithm in \cite{intbas} which uses a combinatorial procedure to obtain an integral basis
+handling all the different conjugacy classes at once, and directly return the generators in triangular shape.
 On our way to explaining this, we first recall some formulae for valuations.
 
 \subsection{Valuations}
@@ -273,12 +274,12 @@ independent of the choice of $R$ from the above list.
 For any $R$ as in the statement, there are natural inclusions $K[X]\subset R \subset L\{\{X\}\}$.
 The valuation $\upsilon_{g}(q)$  is thus defined for any $q\in R[Y]$ and it is sufficient to prove that
 there is a polynomial $p_d\in K[X][Y]$ which maximizes the valuation $\upsilon_{g}(p)$ among all $p$ in $L\{\{X\}\}[Y]$
-of degree $d$. To see this, recall from Lemma \ref{lemma:intA} that there exist 
+of degree $d$. To see this, recall from Lemma \ref{lemma:intA} that there exist
 $\widetilde{p}_d=\prod_{j\in\widetilde{\mathcal{A}}}(Y-\gamma_{j}) \in \mathcal{P}_{X}[Y]$
 which maximizes the valuation over $L\{\{X\}\}$ in degree $d$. There exists an
-integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. Truncating every 
+integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. Truncating every
 $\gamma_{j}$ to degree $\upsilon_{g}(\widetilde{p}_d)$, we obtain a polynomial $\overline
-{p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with the same valuation as $\widetilde{p}_d$. 
+{p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with the same valuation as $\widetilde{p}_d$.
 Applying the trace map for
 $L(X^{1/k})$ over $L(X)$ to the $Y$-monic polynomial $\overline{p}_d$,  and dividing by the (integer) leading coefficient, we obtain a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
 \geq  \upsilon_{g}(\widetilde{p}_d)$\footnote{Note that the trace map sends $X^{1/k}$ to zero.}.
