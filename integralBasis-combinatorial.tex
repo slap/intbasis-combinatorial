@@ -83,28 +83,44 @@
 \author{J. Boehm, W. Decker, S. Laplagne, G. Pfister}
 
 \begin{abstract}
-In \cite{intbas}, we gave an algorithm for computing integral bases in function fields
-of plane curves which has  quasi-optimal  runtime \cite{M1}. Our approach is local-to-global in
+%In \cite{intbas}, we gave an algorithm for computing integral bases in function fields
+%of plane curves which has  quasi-optimal  runtime \cite{M1}. Our approach is local-to-global in
+%the sense that we first compute a local contribution to the normalization at each singularity of the
+%curve, and then put these local contributions together. To find a local contribution at a given
+%singularity in the first step, we rely on Puiseux expansions and Hensel lifting to find a contribution
+%to the normalization at each branch of the singularity, and then merge these contributions using
+%Chinese remaindering. In this paper, we present a combinatorial approach for merging which often
+%performs better in practise, notably in cases where the curve has a large number of branches at
+%one of its singularities.
+
+% Changed to
+In our previous work \cite{intbas}, we have developed an algorithm for computing integral bases of plane curves. Our approach is local-to-global in
 the sense that we first compute a local contribution to the normalization at each singularity of the
 curve, and then put these local contributions together. To find a local contribution at a given
 singularity in the first step, we rely on Puiseux expansions and Hensel lifting to find a contribution
 to the normalization at each branch of the singularity, and then merge these contributions using
-Chinese remaindering. In this paper, we present a combinatorial approach for merging which often
-performs better in practise, notably in cases where the curve has a large number of branches at
-one of its singularities.
-%In this paper, we develop an improved algorithm for computing integral bases of plane curves, that is, function fields in one variable, in characteristic zero.
-%The algorithm builds on our previous work \cite{intbas}.  As in \cite{intbas}, the problem is first reduced to the local case of a single singularity at the origin.
-%The main improvement over \cite{intbas} is a combinatorial approach to find the numerators of the integral basis elements. Thus, we do not require to transform the module generators into triangular form. The new approach is particularly useful for curves with many branches at the singularity.
+Chinese remaindering.
+In this paper, we develop a variant of our algorithm which, in practice, shows an enhanced performance. The main improvement over \cite{intbas} is a combinatorial approach to find the numerators of the integral basis elements. In contrast to the old algorithm, the new variant directly produces an integral basis, and does not require to transform the generators of the local contributions into triangular integral basis form. The new approach is particularly useful for curves with many branches at the singularity.
 \end{abstract}
 \maketitle
 
 \section{Introduction}
 \label{section:introduction}
 
-In this paper, we develop an algorithm to compute the integral closure $\bar A$ in terms of an integral basis for the coordinate ring $A$
-of an algebraic curve. We focus on the case where the curve is defined over a field $K$ of characteristic zero.
-Let $f\in K[X,Y]$ be an irreducible polynomial in two variables, let $C\subset\mathbb{A}^{2}(K)$ be the affine plane curve
+
+
+%In this paper, $A$ will be the coordinate ring
+%of an algebraic curve defined over a field $K$ of characteristic zero.
+%More precisely, let $f\in K[X,Y]$ be an irreducible polynomial
+%%\todo{do we want irreducible or irreducible? See Remark 1.3 and Proposition 3.7.}
+%in two variables, let $C\subset\mathbb{A}^{2}(K)$ be the affine plane curve
+%defined by $f$, and let
+
+% Changed to
+In this paper, $A$ will be the coordinate ring of an algebraic curve.  Our goal is to compute the integral closure $\bar A$ in terms of an integral basis.  We focus on the case where the curve is defined over a field $K$ of characteristic zero and is irreducible over $K$.
+To fix to our notation, let $f\in K[X,Y]$ be an irreducible polynomial in two variables, let $C\subset\mathbb{A}^{2}(K)$ be the affine plane curve
 defined by $f$, and let
+%
 \[
 A=K[C]=K[X,Y]/\langle f(X,Y)\rangle
 \]
@@ -118,12 +134,21 @@ K(C)=\TQR(A)=K(x)[y]=K(X)[Y]/\langle f(X,Y)\rangle,
 \]
 where $x$ is a separating transcendence basis of $K(C)$ over $K$, and $y$ is
 integral over $K[x]$, with integrality equation $f(x,y)=0$.
-Indeed, we have the isomorphism $\TQR(K[x][y]) \rightarrow  K(x)[y]$ defined by
+Indeed, we have the isomorphism $\TQR(K[x,y]) \rightarrow  K(x)[y]$ defined by
 mapping $1/h(x,y) \mapsto b(x,y) / x^c$, where $X^c = a f + b h\in K[X][Y]$
 is a representation which arises from a B\'ezout identity in $K(X)[Y]$ by clearing denominators.
 
+%In particular, $A$ is integral over $K[x]$, which implies that $\overline{A}$ coincides with the
+%integral closure of $K[x]$ in $K(C)$. We may, hence,
+%represent $\overline{A}$ either by generators over $A$ or by generators over
+%$K[x]$. Note that by \cite[Remark 2]{intbas}, $\overline{A}$
+%is a free $K[x]$-module of rank
+%\[
+%n:=\deg_{Y}(f)=[K(C):K(x)].
+%\]
 
-Since \(A\) is integral over \(K[x]\), \(\overline{A}\) is equal to the integral closure of \(K[x]\) in \(K(C)\). Hence, \(\overline{A}\) can be represented both as an $A$-module or as a module over $K[x] \cong K[X]$. As noted in \cite[Remark 2]{intbas}, \(\overline{A}\) is a free \(K[x]\)-module with the rank given by:
+% Changed to
+In particular, $A$ is integral over $K[x]$. This implies $\overline{A}$ is equal to the integral closure of $K[x]$ in $K(C)$. Hence, $\overline{A}$ can be represented both as an $A$-module or as a module over $K[x] \cong K[X]$. As noted in \cite[Remark 2]{intbas}, $\overline{A}$ is a free $K[x]$-module of rank
 \[
 n:=\deg_{Y}(f)=[K(C):K(x)].
 \]
@@ -136,26 +161,43 @@ of free generators for $\overline{A}$ over $K[x]$:
 \]
 \end{defn}
 
-\begin{remark} (See \cite[Remark 4]{intbas}.)
+\begin{remark}
 \label{rem:spec-int-basis}
-In the above setting, there exist
-polynomials $p_{i} \in K[X][Y]$ monic of degree $i$ in $Y$ and polynomials
+In the context outlined above, there exist
+polynomials $p_{i} \in K[X][Y]$ of degree $i$ in $Y$ and polynomials
 $d_i\in K[X]$ such that
 \[
 \left\{1,\frac{p_{1}(x,y)}{d_1(x)},\dots,\frac{p_{n-1}(x,y)}{d_{n-1}(x)}\right\}
 \]
 is an integral basis %\footnote{We say that such an integral basis is in \emph{triangular shape}.}  %\todo{needed?}
-for $\overline{A}$ over $K[x]$.
+ for $\overline{A}$ over $K[x]$.
 
+% Removed - This part of the remark is not needed
+%In fact, such a
+%basis is obtained from any given set of
+%$K[x]$-module generators for $\overline{A}$ by unimodular row operations over
+%the PID $K[X]$: Represent the given generators by polynomials of type
+%$c_{i}=\sum_{j=0}^{n-1}c_{ij}Y^{n-1-j}$, with coefficients $c_{ij}\in K(X)$.
+%Then take $d$ to be the least common denominator of the $c_{ij}$,
+%transform the matrix $(d\cdot c_{ij})$ into Hermite normal form $(p_{ij})$,
+%set $\widetilde{p}_{i}=\sum_{j=0}^{n-1}p_{n-1-i ,j}Y^{n-1-j}$ for each $i=0,\dots, n-1$,
+%and let the ${p}_{i}(X,Y)/d_i(X)$ be obtained by reducing the
+%$\widetilde{p}_{i}(X,Y)/d(X)$ to lowest terms.
 \end{remark}
 
 In \cite{intbas}, we gave an algorithm to compute integral bases for $\overline{A}$ which is
 local-to-global in the following sense: First, for each prime ideal $P$ of the singular locus $\Sing(A)$,
 find a local contribution to the integral basis at $P$. Second, add up these local contributions.
-In this paper, we are concerned with  improving the first step. For simplicity of our presentation, we assume that
-$\Sing(A)$ consists of just one prime ideal $P$, and that this prime ideal defines a $K$-rational singularity
-of $C$ which is located at the origin\footnote{If there are more singularities or conjugated singularities,
-the techniques presented in \cite{intbas} allow us to reduce the problem to the case dealt with here.}.
+In this paper, we are concerned with improving the first step.
+
+%For simplicity of our presentation, we assume that
+%$\Sing(A)$ consists of just one prime ideal $P$, and that this prime ideal defines a $K$-rational singularity
+%of $C$ which is located at the origin\footnote{If there are more singularities or conjugated singularities,
+%the techniques presented in \cite{intbas} allow us to reduce the problem to the case dealt with here.}.
+
+% Changed to
+For this step, after a linear change of coordinates, we can restrict to the problem of computing an integral basis for the normalization of the localization of $A$ at $x = 0$, assuming that the origin is the only singularity of the localization. \footnote{For a group of conjugated singularities,
+by the techniques presented in \cite{intbas} it is enough to handle a single point of the conjugated group.}
 
 In this setting, consider the decomposition
 \begin{equation}
@@ -177,13 +219,21 @@ integral basis for $\overline{A}$ at $P$.
 
 In our previous paper, the merging of the integral bases for the $\overline{B_{\widetilde{f_i}}}$
 is done using Chinese remaindering. This can be inefficient if there is a large number of branches
-of $f$ at $P$. Indeed, to find the cofactors required for the Chinese remainder step, we
-may need to develop the involved Puiseux expansions up to a high order. 
-Moreover, summing up the result may lead to generators which are not in triangular shape, and computing the triangular shape can be computationally expensive.
+of $f$ at $P$.
+%Indeed, to find the cofactors required for the Chinese remainder step, we
+%may need to develop the involved Puiseux expansions up to a high order, and the merging of the
+%integral bases may require the computation of Gr\"obner bases of possibly complicated ideals.
+%In contrast, the direct method introduced in this paper can handle all conjugacy classes
+%simultaneously, without computing Gr\"obner bases.
+%
+% Changed to
+Indeed, in the Chinese remainder step, multiplying the generators of the local integral bases by the cofactors requires that the branches (computed via Hensel lifting) are developed up to a higher order. Moreover, summing up the result may lead to a set of  generators which is not in triangular integral basis shape, and computing the triangular shape can be computationally expensive.
 
-In this paper we present a modification of the algorithm in \cite{intbas} which uses a combinatorial procedure to obtain an integral basis
-handling all the different conjugacy classes at once, and directly return the generators in triangular shape.
+In contrast, the direct method introduced in this paper uses a combinatorial procedure to obtain an integral basis at the origin by
+handling all the different conjugacy classes at once, and directly returns the generators in triangular shape.
+
 On our way to explaining this, we first recall some formulae for valuations.
+
 
 \subsection{Valuations}
 
@@ -261,6 +311,40 @@ $q\in L\{\{X\}\}[Y]$ monic of degree $d$ in $Y$.
 
 For $d = m - 1$, we call $E(g):=\lfloor \upsilon_{g}(\widetilde{p}_d) \rfloor$ the maximal integrality exponent with respect to $g$. It is the maximum exponent of the denominators in an integral basis of $g$.
 
+%For our combinatorial approach, it will be easier to work in the ring $\mathcal{P}_{X}[Y]$ and once we determine which is the optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
+%
+%\begin{lemma}
+%\label{same exp} Let $g\in K[[X]][Y]$ be a square-free monic polynomial of degree
+%$m\geq 1$ in $Y$, let $1\leq d \leq m-1$, and let $R$ be one of the rings $K[X]$,
+%$K[X]_{\left\langle X\right\rangle }$, $K[[X]]$, $K((X))$, ${\mathcal{P}_{X}}$, or $L\{\{X\}\}$.
+%The maximal valuation $\upsilon_{g}(q)$, $q\in R[Y]$ monic of degree $d$ in $Y$, is
+%independent of the choice of $R$ from among this list.
+%\end{lemma}
+%\begin{proof}
+%For any ring $R$ as in the assertion, we have natural inclusions $K[X]\subset R \subset L\{\{X\}\}$.
+%Hence, the value $\upsilon_{g}(q)$  is defined for any polynomial $q\in R[Y]$ and it suffices to show that
+%there is a polynomial $p_d\in K[X][Y]$ such that $\upsilon_{g}(p_d)$ maximizes the valuation over $L\{\{X\}\}$
+%in degree $d$. For this, we recall from Lemma \ref{lemma:intA} that there is a polynomial
+%$\widetilde{p}_d=\prod_{j\in\widetilde{\mathcal{A}}}(Y-\gamma_{j}) \in \mathcal{P}_{X}[Y]$
+%which maximizes the valuation over $L\{\{X\}\}$ in degree $d$. We may choose an
+%integer $k$ such that $\widetilde{p}_d\in L[[X^{1/k}]][Y]$. By truncating each
+%$\gamma_{j}$ to degree $\upsilon_{g}(\widetilde{p}_d)$, we get a polynomial $\overline
+%{p}_d = \prod_{j\in\widetilde{\mathcal{A}}}(Y-\overline{\gamma}_{j}) \in L[X^{1/k}][Y]$ with $\upsilon_{g}(\overline{p}_d)
+%= \upsilon_{g}(\widetilde{p}_d)$. Since $\overline{p}_d$ is monic in $Y$, by applying the trace map for
+%$L(X^{1/k})$ over $L(X)$ to $\overline{p}_d$ and dividing by the integer leading coefficient of the resulting
+%polynomial, we get a monic polynomial $p_d^\prime\in L[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_{d}^\prime})
+%\geq  \upsilon_{g}(\widetilde{p}_d)$ (note that the trace map sends $X^{1/k}$ to zero).
+%Next, considering $p_d^\prime$ as a polynomial in $X, Y$ with coefficients in $L$ and
+%adjoining these coefficients to $K$, we get a finite field extension $K \subset K^\prime$ such that
+%$p_d^\prime \in K^\prime[X][Y]$. Applying the trace map of this extension to $p_d^\prime$ and
+%dividing by the integer leading coefficient of the resulting polynomial, we get a monic polynomial
+%$p_d\in K[X][Y]$ of degree $d$ in $Y$ with $\upsilon_{g}({p_d}) \geq  \upsilon_{g}(\widetilde{p}_d)$.
+%In fact, by Lemma \ref{lemma:intA} and the choice of $\widetilde{p}_d$, equality holds since
+%$\widetilde{p}_d$ maximizes the valuation over $L\{\{X\}\}$.
+%%Note that $K[X]$ is included in all the rings $R$ in the above list, hence the reverse inequalities are trivial, and the result follows.
+%\end{proof}
+
+% Changed to
 For our combinatorial approach, it will be easier to work in the ring $\mathcal{P}_{X}[Y]$ and once we determine which is an optimal subset of expansions for each degree, we construct a polynomial in $K[X][Y]$ using the following lemma, for which we recall also the proof since it gives a constructive way to go from $\mathcal{P}_{X}[Y]$  to $K[X][Y]$.
 
 \begin{lemma}
@@ -295,7 +379,11 @@ $\widetilde{p}_d$ maximizes the valuation over $L\{\{X\}\}$.
 
 \section{One Puiseux block}
 
+%Let $\Gamma \subset \Px$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is the same or conjugated. We assume first that $f$ has only one Puiseux block.
+
+% Changed to
 Let $\Gamma \subset \Px$ be the set of all Puiseux expansions of $f$. The Puiseux blocks of $f$ are a partition of the Puiseux expansions of $f$ such that in each set the first non--rational term of every expansion is identical or conjugated. We assume first that $f$ has only one Puiseux block.
+
 
 To compute an integral basis of $f$, we compute for each $0 \le d < \deg(f)$ a monic polynomial $p \in K[X][Y]$ of degree $d$ with maximal valuation at $f$ among all monic polynomials of degree $d$.
 
